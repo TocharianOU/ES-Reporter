@@ -1,14 +1,17 @@
 from typing import Dict, Any, List, Tuple
-from datetime import datetime
+from datetime import datetime, timedelta
 from ..data_loader import ESDataLoader
+from ..i18n import I18n
 import re
 
 
 class IndexAnalysisGenerator:
     """索引分析生成器"""
     
-    def __init__(self, data_loader: ESDataLoader):
+    def __init__(self, data_loader: ESDataLoader, language: str = "zh"):
         self.data_loader = data_loader
+        self.language = language
+        self.i18n = I18n(language)
     
     def generate(self) -> str:
         """生成索引分析内容"""

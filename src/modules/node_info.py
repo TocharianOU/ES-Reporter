@@ -1,13 +1,16 @@
 from typing import Dict, Any, List, Tuple
 from datetime import datetime
 from ..data_loader import ESDataLoader
+from ..i18n import I18n
 
 
 class NodeInfoGenerator:
     """节点信息生成器"""
     
-    def __init__(self, data_loader: ESDataLoader):
+    def __init__(self, data_loader: ESDataLoader, language: str = "zh"):
         self.data_loader = data_loader
+        self.language = language
+        self.i18n = I18n(language)
     
     def generate(self) -> str:
         """生成节点信息内容"""

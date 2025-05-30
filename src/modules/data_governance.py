@@ -1,15 +1,19 @@
-from typing import Dict, Any, List, Tuple
-from datetime import datetime
+from typing import Dict, Any, List, Tuple, Set
+from datetime import datetime, timedelta
+from collections import defaultdict
 from ..data_loader import ESDataLoader
 import json
 import os
+from ..i18n import I18n
 
 
 class FinalRecommendationsGenerator:
     """最终建议生成器"""
     
-    def __init__(self, data_loader: ESDataLoader):
+    def __init__(self, data_loader: ESDataLoader, language: str = "zh"):
         self.data_loader = data_loader
+        self.language = language
+        self.i18n = I18n(language)
     
     def generate(self) -> str:
         """生成最终建议内容"""
