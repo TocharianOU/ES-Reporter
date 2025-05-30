@@ -1,35 +1,31 @@
-# 使用官方Python镜像
-FROM python:3.11-slim
-
-# 设置环境变量
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
+FROM python:3.11-slim AS base
 
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 uv - 极速Python包管理器
+# 复制 uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # 设置工作目录
 WORKDIR /app
 
-# 复制项目配置文件
+# 先复制项目配置文件和 README
 COPY pyproject.toml ./
 COPY requirements.txt ./
+COPY README.md ./
 
 # 使用 uv 安装依赖
 RUN uv pip install --system -e .
 
 # 复制应用代码
-COPY src/ src/
-COPY templates/ templates/
-COPY app.py run_web.py ./
+COPY . .
 
-# 创建输出目录
-RUN mkdir -p output temp_uploads
+# 设置环境变量
+ENV PYTHONPATH=/app
+ENV FLASK_APP=app.py
 
 # 暴露端口
 EXPOSE 5000
@@ -43,4 +39,4 @@ RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 
 # 启动命令
-CMD ["python", "run_web.py", "--host", "0.0.0.0", "--port", "5000"] 
+CMD ["python", "app.py", "--host", "0.0.0.0", "--port", "5000"] 
