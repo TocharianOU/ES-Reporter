@@ -1,13 +1,16 @@
 from typing import Dict, Any, List
 from datetime import datetime
 from ..data_loader import ESDataLoader
+from ..i18n import I18n
 
 
 class ClusterBasicInfoGenerator:
     """集群基础信息生成器"""
     
-    def __init__(self, data_loader: ESDataLoader):
+    def __init__(self, data_loader: ESDataLoader, language: str = "zh"):
         self.data_loader = data_loader
+        self.language = language
+        self.i18n = I18n(language)
     
     def generate(self) -> str:
         """生成集群基础信息内容"""

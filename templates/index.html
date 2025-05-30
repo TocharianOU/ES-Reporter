@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" id="html-root">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elasticsearch 巡检工具</title>
+    <title id="page-title">Elasticsearch 巡检工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -127,23 +127,80 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
+
+        /* 语言选择器样式 */
+        .language-selector {
+            position: relative;
+        }
+        
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            min-width: 120px;
+        }
+        
+        .language-option {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .language-option:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .language-option.active {
+            background-color: #3b82f6;
+            color: white;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
     <div class="container mx-auto px-4 py-8">
+        <!-- 头部导航区域 -->
+        <div class="flex justify-between items-start mb-8">
+            <div></div> <!-- 占位元素 -->
+            
+            <!-- 语言选择器 -->
+            <div class="language-selector">
+                <button id="languageToggle" class="flex items-center space-x-2 bg-white/50 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-2 text-gray-700 hover:bg-white/70 transition-all">
+                    <i class="fas fa-globe"></i>
+                    <span id="currentLanguage">中文</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                
+                <div id="languageDropdown" class="language-dropdown hidden">
+                    <div class="language-option" data-lang="zh">
+                        <i class="fas fa-check text-blue-500 mr-2 opacity-0" id="zh-check"></i>
+                        中文
+                    </div>
+                    <div class="language-option" data-lang="en">
+                        <i class="fas fa-check text-blue-500 mr-2 opacity-0" id="en-check"></i>
+                        English
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 标题区域 -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-lg mb-4">
                 <i class="fas fa-search text-3xl text-white"></i>
             </div>
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Elasticsearch 巡检工具</h1>
-            <p class="text-gray-600 text-lg">上传 Diagnostic 文件，生成详细巡检报告</p>
+            <h1 id="main-title" class="text-4xl font-bold text-gray-800 mb-2">Elasticsearch 巡检工具</h1>
+            <p id="main-subtitle" class="text-gray-600 text-lg">上传 Diagnostic 文件，生成详细巡检报告</p>
         </div>
 
         <!-- 文件上传区域 -->
         <div class="max-w-4xl mx-auto mb-8">
             <div class="glass-effect rounded-2xl p-8 shadow-xl">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                <h2 id="upload-title" class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
                     <i class="fas fa-cloud-upload-alt text-blue-500 mr-3"></i>
                     上传 Diagnostic 文件
                 </h2>
@@ -152,10 +209,10 @@
                 <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-blue-400 transition-all duration-300 cursor-pointer bg-gray-50 hover:bg-gray-100">
                     <div id="uploadContent">
                         <i class="fas fa-file-archive text-6xl text-gray-400 mb-4"></i>
-                        <p class="text-xl font-semibold text-gray-700 mb-2">拖拽文件到此处或点击上传</p>
-                        <p class="text-gray-500 mb-4">支持 .zip 格式的 Elasticsearch Diagnostic 文件</p>
+                        <p id="drag-drop-text" class="text-xl font-semibold text-gray-700 mb-2">拖拽文件到此处或点击上传</p>
+                        <p id="file-format-text" class="text-gray-500 mb-4">支持 .zip 格式的 Elasticsearch Diagnostic 文件</p>
                         <button id="selectFileBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                            选择文件
+                            <span id="select-file-btn-text">选择文件</span>
                         </button>
                     </div>
                     <input type="file" id="fileInput" accept=".zip" style="display: none;">
@@ -167,7 +224,7 @@
                         <div class="flex items-center">
                             <i class="fas fa-check-circle text-green-500 mr-3"></i>
                             <div>
-                                <p class="font-medium text-green-800">文件已选择</p>
+                                <p id="file-selected-text" class="font-medium text-green-800">文件已选择</p>
                                 <p id="fileName" class="text-sm text-green-600"></p>
                             </div>
                         </div>
@@ -181,7 +238,7 @@
             <div class="text-center">
                 <button id="generateReportBtn" disabled class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-300 disabled:to-gray-400 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg disabled:cursor-not-allowed disabled:shadow-none">
                     <i class="fas fa-magic mr-2"></i>
-                    生成巡检报告
+                    <span id="generate-report-btn-text">生成巡检报告</span>
                 </button>
             </div>
         </div>
@@ -215,7 +272,7 @@
                 <div class="flex items-center">
                     <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
                     <div>
-                        <p class="font-medium text-red-800">错误</p>
+                        <p id="error-title" class="font-medium text-red-800">错误</p>
                         <p id="errorMessage" class="text-sm text-red-600"></p>
                     </div>
                 </div>
@@ -226,18 +283,18 @@
         <div id="reportSection" class="max-w-6xl mx-auto hidden">
             <div class="glass-effect rounded-2xl p-8 shadow-xl">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
+                    <h2 id="report-title" class="text-2xl font-semibold text-gray-800 flex items-center">
                         <i class="fas fa-file-alt text-green-500 mr-3"></i>
                         巡检报告
                     </h2>
                     <div class="flex space-x-3">
                         <button id="downloadMarkdownBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                             <i class="fas fa-download mr-2"></i>
-                            下载 Markdown
+                            <span id="download-markdown-text">下载 Markdown</span>
                         </button>
                         <button id="downloadHtmlBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                             <i class="fas fa-code mr-2"></i>
-                            下载 HTML
+                            <span id="download-html-text">下载 HTML</span>
                         </button>
                     </div>
                 </div>
@@ -259,6 +316,191 @@
 
         const API_BASE = getBasePath();
         console.log('检测到基础路径:', API_BASE);
+
+        // 国际化配置
+        const TRANSLATIONS = {
+            'zh': {
+                'title': 'Elasticsearch 巡检工具',
+                'subtitle': '上传 Diagnostic 文件，生成详细巡检报告',
+                'upload_title': '上传 Diagnostic 文件',
+                'drag_drop_text': '拖拽文件到此处或点击上传',
+                'file_format_text': '支持 .zip 格式的 Elasticsearch Diagnostic 文件',
+                'select_file_btn': '选择文件',
+                'file_selected': '文件已选择',
+                'generate_report_btn': '生成巡检报告',
+                'download_markdown': '下载 Markdown',
+                'download_html': '下载 HTML',
+                'report_title': '巡检报告',
+                'language_selector': '语言',
+                'chinese': '中文',
+                'english': 'English',
+                
+                // 状态提示
+                'status_uploading': '正在上传文件...',
+                'status_uploading_desc': '文件上传中，请稍候',
+                'status_extracting': '正在解压文件...',
+                'status_extracting_desc': '解压诊断文件并验证格式',
+                'status_analyzing': '正在分析数据...',
+                'status_analyzing_desc': '分析集群状态和配置信息',
+                'status_generating': '正在生成报告...',
+                'status_generating_desc': '生成详细的巡检报告',
+                'status_completed': '处理完成！',
+                'status_completed_desc': '报告生成成功',
+                
+                // 错误信息
+                'error_title': '错误',
+                'error_file_format': '请选择 .zip 格式的文件',
+                'error_report_failed': '报告生成失败',
+                'error_network': '网络错误',
+                'error_download_markdown': 'Markdown 下载失败',
+                'error_download_html': 'HTML 下载失败',
+                'error_server_response': '服务器返回非JSON响应',
+                
+                // 进度
+                'progress_completed': '% 完成'
+            },
+            'en': {
+                'title': 'Elasticsearch Inspection Tool',
+                'subtitle': 'Upload Diagnostic Files to Generate Detailed Inspection Reports',
+                'upload_title': 'Upload Diagnostic File',
+                'drag_drop_text': 'Drag and drop files here or click to upload',
+                'file_format_text': 'Supports .zip format Elasticsearch Diagnostic files',
+                'select_file_btn': 'Select File',
+                'file_selected': 'File Selected',
+                'generate_report_btn': 'Generate Inspection Report',
+                'download_markdown': 'Download Markdown',
+                'download_html': 'Download HTML',
+                'report_title': 'Inspection Report',
+                'language_selector': 'Language',
+                'chinese': '中文',
+                'english': 'English',
+                
+                // Status messages
+                'status_uploading': 'Uploading file...',
+                'status_uploading_desc': 'File upload in progress, please wait',
+                'status_extracting': 'Extracting file...',
+                'status_extracting_desc': 'Extracting diagnostic file and validating format',
+                'status_analyzing': 'Analyzing data...',
+                'status_analyzing_desc': 'Analyzing cluster status and configuration',
+                'status_generating': 'Generating report...',
+                'status_generating_desc': 'Generating detailed inspection report',
+                'status_completed': 'Process completed!',
+                'status_completed_desc': 'Report generated successfully',
+                
+                // Error messages
+                'error_title': 'Error',
+                'error_file_format': 'Please select a .zip format file',
+                'error_report_failed': 'Report generation failed',
+                'error_network': 'Network error',
+                'error_download_markdown': 'Markdown download failed',
+                'error_download_html': 'HTML download failed',
+                'error_server_response': 'Server returned non-JSON response',
+                
+                // Progress
+                'progress_completed': '% completed'
+            }
+        };
+
+        // 国际化类
+        class I18n {
+            constructor() {
+                this.currentLanguage = this.detectLanguage();
+                this.init();
+            }
+
+            detectLanguage() {
+                // 检查localStorage中的语言设置
+                const saved = localStorage.getItem('language');
+                if (saved && TRANSLATIONS[saved]) {
+                    return saved;
+                }
+
+                // 检测浏览器语言
+                const browserLang = navigator.language || navigator.userLanguage;
+                if (browserLang.startsWith('zh') || browserLang.startsWith('cn')) {
+                    return 'zh';
+                } else if (browserLang.startsWith('en')) {
+                    return 'en';
+                }
+
+                return 'zh'; // 默认中文
+            }
+
+            init() {
+                this.updateUI();
+                this.bindEvents();
+            }
+
+            setLanguage(lang) {
+                if (TRANSLATIONS[lang]) {
+                    this.currentLanguage = lang;
+                    localStorage.setItem('language', lang);
+                    this.updateUI();
+                }
+            }
+
+            t(key) {
+                return TRANSLATIONS[this.currentLanguage][key] || key;
+            }
+
+            updateUI() {
+                // 更新HTML lang属性
+                document.getElementById('html-root').lang = this.currentLanguage === 'zh' ? 'zh-CN' : 'en';
+                
+                // 更新页面标题
+                document.getElementById('page-title').textContent = this.t('title');
+                
+                // 更新主要文本
+                document.getElementById('main-title').textContent = this.t('title');
+                document.getElementById('main-subtitle').textContent = this.t('subtitle');
+                document.getElementById('upload-title').textContent = this.t('upload_title');
+                document.getElementById('drag-drop-text').textContent = this.t('drag_drop_text');
+                document.getElementById('file-format-text').textContent = this.t('file_format_text');
+                document.getElementById('select-file-btn-text').textContent = this.t('select_file_btn');
+                document.getElementById('file-selected-text').textContent = this.t('file_selected');
+                document.getElementById('generate-report-btn-text').textContent = this.t('generate_report_btn');
+                document.getElementById('download-markdown-text').textContent = this.t('download_markdown');
+                document.getElementById('download-html-text').textContent = this.t('download_html');
+                document.getElementById('report-title').innerHTML = `<i class="fas fa-file-alt text-green-500 mr-3"></i>${this.t('report_title')}`;
+                document.getElementById('error-title').textContent = this.t('error_title');
+                
+                // 更新语言选择器
+                document.getElementById('currentLanguage').textContent = this.t(this.currentLanguage === 'zh' ? 'chinese' : 'english');
+                
+                // 更新语言选择器状态
+                document.getElementById('zh-check').style.opacity = this.currentLanguage === 'zh' ? '1' : '0';
+                document.getElementById('en-check').style.opacity = this.currentLanguage === 'en' ? '1' : '0';
+            }
+
+            bindEvents() {
+                // 语言切换器事件
+                const languageToggle = document.getElementById('languageToggle');
+                const languageDropdown = document.getElementById('languageDropdown');
+                
+                languageToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    languageDropdown.classList.toggle('hidden');
+                });
+
+                // 点击外部关闭下拉菜单
+                document.addEventListener('click', () => {
+                    languageDropdown.classList.add('hidden');
+                });
+
+                // 语言选项点击事件
+                document.querySelectorAll('.language-option').forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const lang = option.getAttribute('data-lang');
+                        this.setLanguage(lang);
+                        languageDropdown.classList.add('hidden');
+                    });
+                });
+            }
+        }
+
+        // 初始化国际化
+        const i18n = new I18n();
 
         let uploadedFile = null;
         let reportData = null;
@@ -332,7 +574,7 @@
             if (isProcessing) return; // 如果正在处理，直接返回
             
             if (!file.name.toLowerCase().endsWith('.zip')) {
-                showError('请选择 .zip 格式的文件');
+                showError(i18n.t('error_file_format'));
                 return;
             }
 
@@ -357,7 +599,7 @@
             statusTitle.textContent = title;
             statusDesc.textContent = desc;
             progressBar.style.width = progress + '%';
-            progressText.textContent = progress + '% 完成';
+            progressText.textContent = progress + '% ' + i18n.t('progress_completed');
         }
 
         // 生成报告
@@ -372,29 +614,30 @@
             processingStatus.classList.remove('hidden');
 
             // 状态：开始上传
-            updateStatus('fas fa-upload animate-bounce', '正在上传文件...', '文件上传中，请稍候', 10);
+            updateStatus('fas fa-upload animate-bounce', i18n.t('status_uploading'), i18n.t('status_uploading_desc'), 10);
             progressBar.classList.add('uploading');
 
             const formData = new FormData();
             formData.append('diagnostic_file', uploadedFile);
+            formData.append('language', i18n.currentLanguage); // 添加语言参数
 
             try {
                 // 模拟上传进度
                 setTimeout(() => {
                     if (isProcessing) { // 检查是否仍在处理中
-                        updateStatus('fas fa-archive animate-spin', '正在解压文件...', '解压诊断文件并验证格式', 30);
+                        updateStatus('fas fa-archive animate-spin', i18n.t('status_extracting'), i18n.t('status_extracting_desc'), 30);
                     }
                 }, 500);
 
                 setTimeout(() => {
                     if (isProcessing) {
-                        updateStatus('fas fa-search animate-spin-slow', '正在分析数据...', '分析集群状态和配置信息', 50);
+                        updateStatus('fas fa-search animate-spin-slow', i18n.t('status_analyzing'), i18n.t('status_analyzing_desc'), 50);
                     }
                 }, 1500);
 
                 setTimeout(() => {
                     if (isProcessing) {
-                        updateStatus('fas fa-chart-line animate-pulse', '正在生成报告...', '生成详细的巡检报告', 80);
+                        updateStatus('fas fa-chart-line animate-pulse', i18n.t('status_generating'), i18n.t('status_generating_desc'), 80);
                     }
                 }, 3000);
 
@@ -415,13 +658,13 @@
                     // 如果不是JSON，读取文本内容查看实际返回了什么
                     const textResponse = await response.text();
                     console.error('非JSON响应内容:', textResponse.substring(0, 200));
-                    throw new Error('服务器返回非JSON响应: ' + textResponse.substring(0, 100));
+                    throw new Error(i18n.t('error_server_response') + ': ' + textResponse.substring(0, 100));
                 }
 
                 const result = await response.json();
 
                 if (result.success) {
-                    updateStatus('fas fa-check-circle', '处理完成！', '报告生成成功', 100);
+                    updateStatus('fas fa-check-circle', i18n.t('status_completed'), i18n.t('status_completed_desc'), 100);
                     progressBar.classList.remove('uploading');
                     
                     setTimeout(() => {
@@ -433,13 +676,13 @@
                         }
                     }, 1000);
                 } else {
-                    showError(result.message || '报告生成失败');
+                    showError(result.message || i18n.t('error_report_failed'));
                     processingStatus.classList.add('hidden');
                     isProcessing = false; // 重置状态
                     generateReportBtn.disabled = false; // 重新启用按钮
                 }
             } catch (error) {
-                showError('网络错误：' + error.message);
+                showError(i18n.t('error_network') + ': ' + error.message);
                 processingStatus.classList.add('hidden');
                 isProcessing = false; // 重置状态
                 generateReportBtn.disabled = false; // 重新启用按钮
@@ -550,10 +793,10 @@
                     a.click();
                     window.URL.revokeObjectURL(url);
                 } else {
-                    showError('Markdown 下载失败');
+                    showError(i18n.t('error_download_markdown'));
                 }
             } catch (error) {
-                showError('Markdown 下载错误：' + error.message);
+                showError(i18n.t('error_download_markdown') + ': ' + error.message);
             }
         });
 
@@ -582,10 +825,10 @@
                     a.click();
                     window.URL.revokeObjectURL(url);
                 } else {
-                    showError('HTML 下载失败');
+                    showError(i18n.t('error_download_html'));
                 }
             } catch (error) {
-                showError('HTML 下载错误：' + error.message);
+                showError(i18n.t('error_download_html') + ': ' + error.message);
             }
         });
 

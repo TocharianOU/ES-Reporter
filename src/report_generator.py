@@ -7,36 +7,40 @@ from .modules import ReportOverviewGenerator, ExecutiveSummaryGenerator, Cluster
 from .modules.index_analysis import IndexAnalysisGenerator
 from .modules.data_governance import FinalRecommendationsGenerator
 from .modules.log_analysis import LogAnalysisGenerator
+from .i18n import I18n
 
 
 class ESReportGenerator:
     """Elasticsearch报告生成器"""
     
-    def __init__(self, data_dir: str, output_dir: str = "output"):
+    def __init__(self, data_dir: str, output_dir: str = "output", language: str = "zh"):
         """
         初始化报告生成器
         
         Args:
             data_dir: 诊断数据目录路径
             output_dir: 输出目录路径
+            language: 报告语言 ('zh' 或 'en')
         """
         self.data_dir = data_dir
         self.output_dir = output_dir
+        self.language = language
+        self.i18n = I18n(language)  # 初始化国际化
         self.data_loader = ESDataLoader(data_dir)
         
         # 创建输出目录
         os.makedirs(output_dir, exist_ok=True)
         os.makedirs(os.path.join(output_dir, "cases"), exist_ok=True)
         
-        # 初始化生成器
+        # 初始化生成器，传递语言参数
         self.generators = {
-            'REPORT_OVERVIEW': ReportOverviewGenerator(self.data_loader),
-            'EXECUTIVE_SUMMARY': ExecutiveSummaryGenerator(self.data_loader),
-            'CLUSTER_BASIC_INFO': ClusterBasicInfoGenerator(self.data_loader),
-            'NODE_INFO': NodeInfoGenerator(self.data_loader),
-            'INDEX_ANALYSIS': IndexAnalysisGenerator(self.data_loader),
-            'FINAL_RECOMMENDATIONS': FinalRecommendationsGenerator(self.data_loader),
-            'LOG_ANALYSIS': LogAnalysisGenerator(self.data_loader)
+            'REPORT_OVERVIEW': ReportOverviewGenerator(self.data_loader, language),
+            'EXECUTIVE_SUMMARY': ExecutiveSummaryGenerator(self.data_loader, language),
+            'CLUSTER_BASIC_INFO': ClusterBasicInfoGenerator(self.data_loader, language),
+            'NODE_INFO': NodeInfoGenerator(self.data_loader, language),
+            'INDEX_ANALYSIS': IndexAnalysisGenerator(self.data_loader, language),
+            'FINAL_RECOMMENDATIONS': FinalRecommendationsGenerator(self.data_loader, language),
+            'LOG_ANALYSIS': LogAnalysisGenerator(self.data_loader, language)
         }
     
     def load_template(self) -> str:
@@ -52,7 +56,38 @@ class ESReportGenerator:
     
     def get_default_template(self) -> str:
         """获取默认模板"""
-        return """# Elasticsearch 集群巡检报告
+        if self.language == 'en':
+            return """# Elasticsearch Cluster Inspection Report
+
+## 1. Report Overview
+
+{{REPORT_OVERVIEW}}
+
+## 2. Executive Summary
+
+{{EXECUTIVE_SUMMARY}}
+
+## 3. Cluster Basic Information
+
+{{CLUSTER_BASIC_INFO}}
+
+## 4. Node Information
+
+{{NODE_INFO}}
+
+## 5. Index Analysis
+
+{{INDEX_ANALYSIS}}
+
+## 6. Log Analysis
+
+{{LOG_ANALYSIS}}
+
+## 7. Final Recommendations
+
+{{FINAL_RECOMMENDATIONS}}"""
+        else:
+            return """# Elasticsearch 集群巡检报告
 
 ## 1. 报告概述
 
@@ -96,11 +131,17 @@ class ESReportGenerator:
             try:
                 return self.generators[section_name].generate()
             except Exception as e:
-                error_msg = f"生成 {section_name} 章节时发生错误: {e}"
-                print(error_msg)
-                return f"**生成错误**: {error_msg}"
+                if self.language == 'en':
+                    error_msg = f"Error generating {section_name} section: {e}"
+                    return f"**Generation Error**: {error_msg}"
+                else:
+                    error_msg = f"生成 {section_name} 章节时发生错误: {e}"
+                    return f"**生成错误**: {error_msg}"
         else:
-            return f"**待实现**: {section_name} 章节暂未实现"
+            if self.language == 'en':
+                return f"**To Be Implemented**: {section_name} section not yet implemented"
+            else:
+                return f"**待实现**: {section_name} 章节暂未实现"
     
     def generate_case_files(self):
         """生成检查用的case文件"""
@@ -147,7 +188,10 @@ class ESReportGenerator:
         remaining_placeholders = re.findall(r'\{\{([^}]+)\}\}', report_content)
         for placeholder in remaining_placeholders:
             full_placeholder = f"{{{{{placeholder}}}}}"
-            report_content = report_content.replace(full_placeholder, f"**待实现**: {placeholder} 章节暂未实现")
+            if self.language == 'en':
+                report_content = report_content.replace(full_placeholder, f"**To Be Implemented**: {placeholder} section not yet implemented")
+            else:
+                report_content = report_content.replace(full_placeholder, f"**待实现**: {placeholder} 章节暂未实现")
         
         # 生成报告文件名
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

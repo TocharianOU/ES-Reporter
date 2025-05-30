@@ -25,6 +25,7 @@ sys.path.insert(0, str(current_dir))
 # 导入本地模块
 from src.report_generator import ESReportGenerator
 from src.html_converter import markdown_to_html, create_html_template
+from src.i18n import detect_browser_language, i18n
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB 最大文件大小
@@ -165,8 +166,15 @@ def process_table(table_lines):
 
 @app.route('/')
 def index():
-    """主页"""
-    return render_template('index.html')
+    """主页 - 支持语言检测"""
+    # 检测浏览器语言
+    accept_language = request.headers.get('Accept-Language', '')
+    detected_lang = detect_browser_language(accept_language)
+    
+    # 设置语言
+    i18n.set_language(detected_lang)
+    
+    return render_template('index.html', language=detected_lang)
 
 @app.route('/health')
 def health():
@@ -183,16 +191,24 @@ def health():
 def upload_diagnostic():
     """上传并处理 diagnostic 文件"""
     try:
+        # 获取语言参数
+        language = request.form.get('language', 'zh')  # 默认中文
+        if language not in ['zh', 'en']:
+            language = 'zh'
+        
+        # 设置国际化语言
+        i18n.set_language(language)
+        
         # 检查文件
         if 'diagnostic_file' not in request.files:
-            return jsonify({'success': False, 'message': '没有选择文件'})
+            return jsonify({'success': False, 'message': i18n.t('error_no_file', 'ui')})
         
         file = request.files['diagnostic_file']
         if file.filename == '':
-            return jsonify({'success': False, 'message': '没有选择文件'})
+            return jsonify({'success': False, 'message': i18n.t('error_no_file', 'ui')})
         
         if not file.filename.lower().endswith('.zip'):
-            return jsonify({'success': False, 'message': '请上传 .zip 格式的文件'})
+            return jsonify({'success': False, 'message': i18n.t('error_file_format', 'ui')})
         
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
@@ -212,19 +228,19 @@ def upload_diagnostic():
             # 查找实际的数据目录
             data_dir = find_diagnostic_data_dir(upload_dir)
             if not data_dir:
-                return jsonify({'success': False, 'message': '无法找到有效的诊断数据目录'})
+                return jsonify({'success': False, 'message': i18n.t('error_invalid_diagnostic', 'ui')})
             
             print(f"📊 发现诊断数据目录: {data_dir}")
             
             # 生成报告
             print("🚀 开始生成报告...")
-            report_generator = ESReportGenerator(data_dir)
+            report_generator = ESReportGenerator(data_dir, language=language)  # 传递语言参数
             report_result = report_generator.generate_report(generate_html=True)  # 生成HTML版本
             
             # 读取报告内容
             markdown_path = report_result.get('markdown')
             if not markdown_path or not os.path.exists(markdown_path):
-                return jsonify({'success': False, 'message': '报告生成失败'})
+                return jsonify({'success': False, 'message': i18n.t('error_report_failed', 'ui')})
             
             with open(markdown_path, 'r', encoding='utf-8') as f:
                 markdown_content = f.read()
@@ -242,7 +258,8 @@ def upload_diagnostic():
                 'markdown_path': markdown_path,
                 'html_path': report_result.get('html'),
                 'generated_at': datetime.now().isoformat(),
-                'filename': filename
+                'filename': filename,
+                'language': language  # 保存语言信息
             }
             
             print(f"✅ 报告生成完成: {report_id}")
@@ -252,14 +269,15 @@ def upload_diagnostic():
                 'report_id': report_id,
                 'report_content': markdown_content,
                 'html_content': html_content,
-                'generated_at': datetime.now().isoformat()
+                'generated_at': datetime.now().isoformat(),
+                'language': language
             })
             
         except zipfile.BadZipFile:
-            return jsonify({'success': False, 'message': '文件不是有效的ZIP格式'})
+            return jsonify({'success': False, 'message': i18n.t('error_invalid_zip', 'ui')})
         except Exception as e:
             print(f"❌ 处理文件时发生错误: {e}")
-            return jsonify({'success': False, 'message': f'处理文件时发生错误: {str(e)}'})
+            return jsonify({'success': False, 'message': f'{i18n.t("error_processing", "ui")}: {str(e)}'})
         finally:
             # 清理临时文件（保留报告文件）
             try:
@@ -272,7 +290,7 @@ def upload_diagnostic():
         
     except Exception as e:
         print(f"❌ 上传处理失败: {e}")
-        return jsonify({'success': False, 'message': f'服务器错误: {str(e)}'})
+        return jsonify({'success': False, 'message': f'{i18n.t("error_server", "ui")}: {str(e)}'})
 
 def find_diagnostic_data_dir(base_dir):
     """查找诊断数据目录"""
