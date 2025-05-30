@@ -32,7 +32,12 @@ class FinalRecommendationsGenerator:
     
     def _generate_health_assessment(self) -> str:
         """生成集群健康状况评估"""
-        content = """### 7.1 集群健康状况评估
+        if self.language == 'en':
+            content = """### 7.1 Cluster Health Assessment
+
+"""
+        else:
+            content = """### 7.1 集群健康状况评估
 
 """
         
@@ -42,7 +47,10 @@ class FinalRecommendationsGenerator:
         nodes_stats = self.data_loader.get_nodes_stats()
         
         if not cluster_health:
-            content += "无法获取集群健康状态信息\n\n"
+            if self.language == 'en':
+                content += "Unable to retrieve cluster health status information\n\n"
+            else:
+                content += "无法获取集群健康状态信息\n\n"
             return content
         
         cluster_status = cluster_health.get('status', 'unknown')
@@ -51,7 +59,17 @@ class FinalRecommendationsGenerator:
         
         # 基础健康评估
         if cluster_status == 'green' and unassigned_shards == 0:
-            content += """**整体评估**: ✅ 集群运行状态良好
+            if self.language == 'en':
+                content += """**Overall Assessment**: ✅ Cluster is running in good condition
+
+**Core Indicators**:
+- Cluster Status: GREEN, all shards properly allocated
+- Data Integrity: 100%, no risk of data loss
+- Service Availability: Normal, able to provide stable service
+
+"""
+            else:
+                content += """**整体评估**: ✅ 集群运行状态良好
 
 **核心指标**:
 - 集群状态: GREEN，所有分片正常分配
@@ -60,7 +78,17 @@ class FinalRecommendationsGenerator:
 
 """
         elif cluster_status == 'yellow':
-            content += """**整体评估**: 🟡 集群基本健康，存在副本分片问题
+            if self.language == 'en':
+                content += """**Overall Assessment**: 🟡 Cluster is basically healthy with replica shard issues
+
+**Core Indicators**:
+- Cluster Status: YELLOW, primary shards normal but replica shards have issues
+- Data Integrity: Primary shards intact, replica protection needs attention
+- Service Availability: Normal, but fault tolerance is reduced
+
+"""
+            else:
+                content += """**整体评估**: 🟡 集群基本健康，存在副本分片问题
 
 **核心指标**:
 - 集群状态: YELLOW，主分片正常但副本分片有问题
@@ -69,7 +97,17 @@ class FinalRecommendationsGenerator:
 
 """
         else:
-            content += """**整体评估**: 🔴 集群存在严重问题，需要立即处理
+            if self.language == 'en':
+                content += """**Overall Assessment**: 🔴 Cluster has serious issues, requires immediate attention
+
+**Core Indicators**:
+- Cluster Status: RED, primary shard issues exist
+- Data Integrity: Some data may be inaccessible
+- Service Availability: Affected, requires urgent handling
+
+"""
+            else:
+                content += """**整体评估**: 🔴 集群存在严重问题，需要立即处理
 
 **核心指标**:
 - 集群状态: RED，存在主分片问题
@@ -91,16 +129,27 @@ class FinalRecommendationsGenerator:
                     high_heap_nodes.append((node_name, jvm_heap_percent))
             
             if high_heap_nodes:
-                content += "**节点资源状况**: 🟡 部分节点堆内存使用率较高\n"
-                for node_name, heap_percent in high_heap_nodes:
-                    content += f"- {node_name}: {heap_percent:.1f}% 堆内存使用率\n"
+                if self.language == 'en':
+                    content += "**Node Resource Status**: 🟡 Some nodes have high heap memory usage\n"
+                    for node_name, heap_percent in high_heap_nodes:
+                        content += f"- {node_name}: {heap_percent:.1f}% heap memory usage\n"
+                else:
+                    content += "**节点资源状况**: 🟡 部分节点堆内存使用率较高\n"
+                    for node_name, heap_percent in high_heap_nodes:
+                        content += f"- {node_name}: {heap_percent:.1f}% 堆内存使用率\n"
                 content += "\n"
             else:
-                content += "**节点资源状况**: ✅ 所有节点资源使用正常\n\n"
+                if self.language == 'en':
+                    content += "**Node Resource Status**: ✅ All nodes have normal resource usage\n\n"
+                else:
+                    content += "**节点资源状况**: ✅ 所有节点资源使用正常\n\n"
         
         # 日志健康状况评估
         log_health_status = self._assess_log_health()
-        content += f"**日志健康状况**: {log_health_status['status']} {log_health_status['description']}\n"
+        if self.language == 'en':
+            content += f"**Log Health Status**: {log_health_status['status']} {log_health_status['description']}\n"
+        else:
+            content += f"**日志健康状况**: {log_health_status['status']} {log_health_status['description']}\n"
         if log_health_status['details']:
             for detail in log_health_status['details']:
                 content += f"- {detail}\n"
@@ -110,7 +159,14 @@ class FinalRecommendationsGenerator:
     
     def _generate_business_confirmation_items(self) -> str:
         """生成需要业务确认的配置项"""
-        content = """### 7.2 需要业务确认的配置项
+        if self.language == 'en':
+            content = """### 7.2 Items Requiring Business Confirmation
+
+The following configuration items may be special requirements for business scenarios. It is recommended to confirm with relevant business personnel whether these are expected settings:
+
+"""
+        else:
+            content = """### 7.2 需要业务确认的配置项
 
 以下配置项可能是业务场景的特殊需求，建议与相关业务人员确认是否为预期设置：
 
@@ -126,22 +182,38 @@ class FinalRecommendationsGenerator:
             # 分片重平衡配置
             rebalance_enable = persistent.get('cluster', {}).get('routing', {}).get('rebalance', {}).get('enable')
             if rebalance_enable == 'none':
-                confirmation_items.append({
-                    'item': '分片重平衡已禁用',
-                    'current': 'cluster.routing.rebalance.enable = none',
-                    'reason': '可能是维护期间的临时设置或特殊业务需求',
-                    'suggestion': '确认是否为临时设置，正常情况下建议启用'
-                })
+                if self.language == 'en':
+                    confirmation_items.append({
+                        'item': 'Shard rebalancing disabled',
+                        'current': 'cluster.routing.rebalance.enable = none',
+                        'reason': 'May be a temporary setting during maintenance or special business requirement',
+                        'suggestion': 'Confirm if this is a temporary setting, normally recommended to enable'
+                    })
+                else:
+                    confirmation_items.append({
+                        'item': '分片重平衡已禁用',
+                        'current': 'cluster.routing.rebalance.enable = none',
+                        'reason': '可能是维护期间的临时设置或特殊业务需求',
+                        'suggestion': '确认是否为临时设置，正常情况下建议启用'
+                    })
             
             # 分片分配配置
             allocation_enable = persistent.get('cluster', {}).get('routing', {}).get('allocation', {}).get('enable')
             if allocation_enable in ['none', 'primaries']:
-                confirmation_items.append({
-                    'item': '分片分配受限',
-                    'current': f'cluster.routing.allocation.enable = {allocation_enable}',
-                    'reason': '可能是维护操作或故障恢复过程中的设置',
-                    'suggestion': '确认维护操作是否完成，可考虑恢复为正常分配'
-                })
+                if self.language == 'en':
+                    confirmation_items.append({
+                        'item': 'Shard allocation restricted',
+                        'current': f'cluster.routing.allocation.enable = {allocation_enable}',
+                        'reason': 'May be a setting during maintenance operations or failure recovery',
+                        'suggestion': 'Confirm if maintenance operations are complete, consider restoring to normal allocation'
+                    })
+                else:
+                    confirmation_items.append({
+                        'item': '分片分配受限',
+                        'current': f'cluster.routing.allocation.enable = {allocation_enable}',
+                        'reason': '可能是维护操作或故障恢复过程中的设置',
+                        'suggestion': '确认维护操作是否完成，可考虑恢复为正常分配'
+                    })
         
         # 检查大索引配置
         indices_stats = self.data_loader.get_indices_stats()
@@ -159,30 +231,56 @@ class FinalRecommendationsGenerator:
                     large_indices.append((index_name, doc_count, size_bytes))
             
             if large_indices:
-                confirmation_items.append({
-                    'item': '超大索引存在',
-                    'current': f'发现{len(large_indices)}个索引文档数超过2亿',
-                    'reason': '可能是业务需求或历史数据积累',
-                    'suggestion': '确认是否符合业务预期，可考虑按时间分割索引'
-                })
+                if self.language == 'en':
+                    confirmation_items.append({
+                        'item': 'Very large indices exist',
+                        'current': f'Found {len(large_indices)} indices with over 200 million documents',
+                        'reason': 'May be business requirements or historical data accumulation',
+                        'suggestion': 'Confirm if this meets business expectations, consider splitting indices by time'
+                    })
+                else:
+                    confirmation_items.append({
+                        'item': '超大索引存在',
+                        'current': f'发现{len(large_indices)}个索引文档数超过2亿',
+                        'reason': '可能是业务需求或历史数据积累',
+                        'suggestion': '确认是否符合业务预期，可考虑按时间分割索引'
+                    })
         
         # 输出确认项
         if confirmation_items:
             for i, item in enumerate(confirmation_items, 1):
-                content += f"""**{i}. {item['item']}**
+                if self.language == 'en':
+                    content += f"""**{i}. {item['item']}**
+- **Current Status**: {item['current']}
+- **Possible Reason**: {item['reason']}
+- **Recommended Action**: {item['suggestion']}
+
+"""
+                else:
+                    content += f"""**{i}. {item['item']}**
 - **当前状态**: {item['current']}
 - **可能原因**: {item['reason']}
 - **建议操作**: {item['suggestion']}
 
 """
         else:
-            content += "✅ 未发现需要特别确认的配置项，当前配置基本符合常规运维标准。\n\n"
+            if self.language == 'en':
+                content += "✅ No configuration items requiring special confirmation found. Current configuration generally meets standard operational practices.\n\n"
+            else:
+                content += "✅ 未发现需要特别确认的配置项，当前配置基本符合常规运维标准。\n\n"
         
         return content
     
     def _generate_optimization_recommendations(self) -> str:
         """生成优化建议"""
-        content = """### 7.3 优化建议
+        if self.language == 'en':
+            content = """### 7.3 Optimization Recommendations
+
+The following optimization recommendations are based on current cluster conditions, sorted by priority:
+
+"""
+        else:
+            content = """### 7.3 优化建议
 
 以下是基于当前集群状况提出的优化建议，按优先级排序：
 
@@ -190,96 +288,151 @@ class FinalRecommendationsGenerator:
         
         recommendations = []
         
-        # 分析索引优化机会
+        # 获取基础数据
+        cluster_stats = self.data_loader.get_cluster_stats()
+        nodes_stats = self.data_loader.get_nodes_stats()
         indices_stats = self.data_loader.get_indices_stats()
-        indices_settings = self.data_loader.get_settings()
         
-        if indices_stats and indices_settings:
-            # 检查分片优化机会
-            oversized_shards = []
-            undersized_shards = []
+        # 堆内存优化建议
+        if nodes_stats:
+            high_heap_nodes = []
+            nodes = nodes_stats.get('nodes', {})
             
-            for index_name, index_data in indices_stats.get('indices', {}).items():
+            for node_id, node_data in nodes.items():
+                jvm_heap_percent = node_data.get('jvm', {}).get('mem', {}).get('heap_used_percent', 0)
+                node_name = node_data.get('name', node_id)
+                if jvm_heap_percent > 80:
+                    high_heap_nodes.append((node_name, jvm_heap_percent))
+            
+            if high_heap_nodes:
+                if self.language == 'en':
+                    recommendations.append({
+                        'title': 'JVM Heap Memory Optimization',
+                        'priority': 'High',
+                        'description': f'Found {len(high_heap_nodes)} nodes with heap usage > 80%',
+                        'action': 'Check for memory leaks, optimize queries, or increase heap size',
+                        'impact': 'Can improve cluster stability and prevent OOM errors',
+                        'urgency': 'Recommended to resolve within 1-2 days'
+                    })
+                else:
+                    recommendations.append({
+                        'title': 'JVM堆内存优化',
+                        'priority': '高',
+                        'description': f'发现{len(high_heap_nodes)}个节点堆内存使用率超过80%',
+                        'action': '检查内存泄漏、优化查询语句或增加堆内存大小',
+                        'impact': '可以提升集群稳定性，防止OOM错误',
+                        'urgency': '建议1-2天内处理'
+                    })
+        
+        # 分片优化建议
+        if indices_stats:
+            large_shards = []
+            undersized_shards = []
+            indices = indices_stats.get('indices', {})
+            
+            for index_name, index_data in indices.items():
                 if index_name.startswith('.'):  # 跳过系统索引
                     continue
                 
-                # 获取分片数量
-                index_config = indices_settings.get(index_name, {})
-                if index_config:
-                    index_settings = index_config.get('settings', {}).get('index', {})
-                    shard_count = int(index_settings.get('number_of_shards', 1))
-                    
-                    # 计算单分片大小
-                    total_size = index_data.get('total', {}).get('store', {}).get('size_in_bytes', 0)
-                    if shard_count > 0:
-                        shard_size_gb = total_size / shard_count / (1024**3)
-                        
-                        if shard_size_gb > 50:  # 超过50GB
-                            oversized_shards.append((index_name, shard_size_gb, shard_count))
-                        elif shard_size_gb < 1 and total_size > 100*1024*1024:  # 小于1GB但索引大于100MB
-                            undersized_shards.append((index_name, shard_size_gb, shard_count))
+                # 获取主分片数和分片大小
+                shards_stats = index_data.get('shards', {})
+                primary_size = 0
+                shard_count = 0
+                
+                for shard_id, shard_list in shards_stats.items():
+                    for shard in shard_list:
+                        if shard.get('routing', {}).get('primary', False):
+                            shard_count += 1
+                            shard_size_bytes = shard.get('store', {}).get('size_in_bytes', 0)
+                            if shard_size_bytes > 50 * 1024 * 1024 * 1024:  # > 50GB
+                                large_shards.append(index_name)
+                            elif shard_size_bytes < 1 * 1024 * 1024 * 1024:  # < 1GB  
+                                undersized_shards.append(index_name)
             
-            # 分片优化建议
-            if oversized_shards:
-                recommendations.append({
-                    'priority': '中等',
-                    'category': '分片优化',
-                    'title': '大分片优化建议',
-                    'description': f'发现{len(oversized_shards)}个索引的分片大小超过50GB',
-                    'impact': '可提升索引操作性能和故障恢复速度',
-                    'action': '考虑增加分片数量或使用时间分割策略',
-                    'urgency': '可在业务低峰期进行调整'
-                })
+            if large_shards:
+                if self.language == 'en':
+                    recommendations.append({
+                        'title': 'Large Shard Optimization',
+                        'priority': 'Medium',
+                        'description': f'Found {len(large_shards)} indices with shards > 50GB',
+                        'action': 'Consider increasing primary shard count or implementing time-based splitting',
+                        'impact': 'Can improve indexing performance and failure recovery speed',
+                        'urgency': 'Recommended to implement gradually based on business requirements'
+                    })
+                else:
+                    recommendations.append({
+                        'title': '大分片优化建议',
+                        'priority': '中等',
+                        'description': f'发现{len(large_shards)}个索引存在超过50GB的分片',
+                        'action': '考虑增加主分片数或实施按时间分割策略',
+                        'impact': '可提升索引操作性能和故障恢复速度',
+                        'urgency': '建议结合业务需求逐步实施'
+                    })
             
             if len(undersized_shards) >= 10:  # 超过10个小分片索引才建议优化
-                recommendations.append({
-                    'priority': '低',
-                    'category': '分片整合',
-                    'title': '小分片整合建议',
-                    'description': f'发现{len(undersized_shards)}个索引分片偏小',
-                    'impact': '可减少系统开销，提升整体性能',
-                    'action': '考虑减少分片数量或合并小索引',
-                    'urgency': '非紧急，可在系统维护时考虑'
-                })
-        
-        # 检查ILM策略
-        ilm_policies = self.data_loader.load_json_file('commercial/ilm_policies.json')
-        if not ilm_policies:
-            recommendations.append({
-                'priority': '中等',
-                'category': '生命周期管理',
-                'title': 'ILM策略配置',
-                'description': '当前未配置索引生命周期管理',
-                'impact': '可自动管理索引生命周期，优化存储成本',
-                'action': '根据业务需求配置ILM策略',
-                'urgency': '建议结合业务需求逐步实施'
-            })
+                if self.language == 'en':
+                    recommendations.append({
+                        'title': 'Small Shard Consolidation',
+                        'priority': 'Low',
+                        'description': f'Found {len(undersized_shards)} indices with shards < 1GB',
+                        'action': 'Consider consolidating related indices or reducing primary shard count',
+                        'impact': 'Can reduce metadata overhead and improve cluster efficiency',
+                        'urgency': 'Recommended to implement gradually based on business requirements'
+                    })
+                else:
+                    recommendations.append({
+                        'title': '小分片整合建议',
+                        'priority': '低',
+                        'description': f'发现{len(undersized_shards)}个索引存在小于1GB的分片',
+                        'action': '考虑整合相关索引或减少主分片数',
+                        'impact': '可以减少元数据开销，提升集群效率',
+                        'urgency': '建议结合业务需求逐步实施'
+                    })
         
         # 输出建议
         if recommendations:
-            # 按优先级排序
-            priority_order = {'高': 1, '中等': 2, '低': 3}
-            recommendations.sort(key=lambda x: priority_order.get(x['priority'], 4))
-            
             for i, rec in enumerate(recommendations, 1):
-                priority_icon = {'高': '🔴', '中等': '🟡', '低': '🟢'}.get(rec['priority'], '⚪')
-                content += f"""**{i}. {rec['title']}** {priority_icon} {rec['priority']}优先级
+                if self.language == 'en':
+                    priority_icon = {'High': '🔴', 'Medium': '🟡', 'Low': '🟢'}.get(rec['priority'], '⚪')
+                    content += f"""**{i}. {rec['title']}** {priority_icon} {rec['priority']} Priority
+
+- **Current Description**: {rec['description']}
+- **Expected Impact**: {rec['impact']}
+- **Recommended Action**: {rec['action']}
+- **Implementation Timeline**: {rec['urgency']}
+
+"""
+                else:
+                    priority_icon = {'高': '🔴', '中等': '🟡', '低': '🟢'}.get(rec['priority'], '⚪')
+                    content += f"""**{i}. {rec['title']}** {priority_icon} {rec['priority']}优先级
 
 - **现状描述**: {rec['description']}
-- **预期收益**: {rec['impact']}
+- **预期效果**: {rec['impact']}
 - **建议操作**: {rec['action']}
-- **实施时机**: {rec['urgency']}
+- **实施时间**: {rec['urgency']}
 
 """
         else:
-            content += "✅ 当前集群配置已经比较优化，暂无明显的优化建议。\n\n"
+            if self.language == 'en':
+                content += "✅ Current cluster configuration is already well optimized, no obvious optimization recommendations.\n\n"
+            else:
+                content += "✅ 当前集群配置已经比较优化，暂无明显的优化建议。\n\n"
         
-        # 总结
-        content += """**优化实施原则**:
-- 优先处理影响稳定性和性能的问题
+        # 通用注意事项
+        if self.language == 'en':
+            content += """**General Implementation Notes**:
+- All optimization recommendations should be implemented during business low-peak hours
+- Back up important data before making any configuration changes
+- Implement changes gradually and monitor cluster performance
+- Discuss implementation plans with business teams to ensure service continuity
+
+"""
+        else:
+            content += """**通用实施说明**:
 - 所有调整建议在业务低峰期进行
-- 重要配置变更前请做好备份和回滚准备
-- 定期监控调整效果，根据实际情况微调参数
+- 重要配置修改前请备份重要数据
+- 分阶段实施并监控集群性能变化
+- 与业务方沟通实施计划，确保服务连续性
 
 """
         
@@ -290,11 +443,18 @@ class FinalRecommendationsGenerator:
         logs_dir = os.path.join(self.data_loader.data_dir, 'logs')
         
         if not os.path.exists(logs_dir):
-            return {
-                'status': '⚠️',
-                'description': '日志目录不存在，无法评估日志健康状况',
-                'details': []
-            }
+            if self.language == 'en':
+                return {
+                    'status': '⚠️',
+                    'description': 'Log directory does not exist, unable to assess log health',
+                    'details': []
+                }
+            else:
+                return {
+                    'status': '⚠️',
+                    'description': '日志目录不存在，无法评估日志健康状况',
+                    'details': []
+                }
         
         try:
             # 统计日志文件信息
@@ -327,49 +487,88 @@ class FinalRecommendationsGenerator:
             
             # 评估健康状况
             status = "✅"
-            description = "日志状况良好"
+            if self.language == 'en':
+                description = "Log status is good"
+            else:
+                description = "日志状况良好"
             details = []
             
             # 检查累积情况
             if len(log_files) > 50:
                 status = "🔴"
-                description = "日志累积过多，需要清理"
-                details.append(f"日志文件数量({len(log_files)})过多，建议定期清理")
+                if self.language == 'en':
+                    description = "Too many log files accumulated, cleanup needed"
+                    details.append(f"Log file count ({len(log_files)}) is excessive, recommend regular cleanup")
+                else:
+                    description = "日志累积过多，需要清理"
+                    details.append(f"日志文件数量({len(log_files)})过多，建议定期清理")
             elif len(log_files) > 20:
                 status = "🟡"
-                description = "日志累积较多，建议关注"
-                details.append(f"日志文件数量({len(log_files)})较多，建议配置轮转策略")
+                if self.language == 'en':
+                    description = "Many log files accumulated, monitoring recommended"
+                    details.append(f"Log file count ({len(log_files)}) is high, recommend configuring rotation strategy")
+                else:
+                    description = "日志累积较多，建议关注"
+                    details.append(f"日志文件数量({len(log_files)})较多，建议配置轮转策略")
             
             if total_size > 1024 * 1024 * 1024:  # 超过1GB
                 status = "🔴"
-                description = "日志大小过大，需要清理"
-                details.append(f"日志总大小({self._format_log_size(total_size)})过大")
+                if self.language == 'en':
+                    description = "Log size too large, cleanup needed"
+                    details.append(f"Total log size ({self._format_log_size(total_size)}) is excessive")
+                else:
+                    description = "日志大小过大，需要清理"
+                    details.append(f"日志总大小({self._format_log_size(total_size)})过大")
             elif total_size > 500 * 1024 * 1024:  # 超过500MB
                 if status == "✅":
                     status = "🟡"
-                    description = "日志大小适中，建议监控"
-                details.append(f"日志大小({self._format_log_size(total_size)})需要关注增长趋势")
+                    if self.language == 'en':
+                        description = "Log size moderate, monitoring recommended"
+                    else:
+                        description = "日志大小适中，建议监控"
+                if self.language == 'en':
+                    details.append(f"Log size ({self._format_log_size(total_size)}) needs attention for growth trend")
+                else:
+                    details.append(f"日志大小({self._format_log_size(total_size)})需要关注增长趋势")
             
             # 检查错误和警告
             if has_errors:
                 status = "🔴"
-                description = "发现错误日志，需要处理"
-                details.append("发现ERROR或FATAL级别的错误日志")
+                if self.language == 'en':
+                    description = "Error logs found, handling required"
+                    details.append("Found ERROR or FATAL level error logs")
+                else:
+                    description = "发现错误日志，需要处理"
+                    details.append("发现ERROR或FATAL级别的错误日志")
             
             if has_warnings:
                 if status == "✅":
                     status = "🟡"
-                    description = "发现警告日志，建议关注"
-                details.append("发现WARN级别的警告日志")
+                    if self.language == 'en':
+                        description = "Warning logs found, attention recommended"
+                    else:
+                        description = "发现警告日志，建议关注"
+                if self.language == 'en':
+                    details.append("Found WARN level warning logs")
+                else:
+                    details.append("发现WARN级别的警告日志")
             
             # 如果没有问题，补充健康详情
             if status == "✅":
-                details = [
-                    f"日志文件总数: {len(log_files)}个（包含{compressed_count}个压缩文件）",
-                    f"总占用空间: {self._format_log_size(total_size)}",
-                    "未发现错误或警告日志",
-                    "日志累积情况正常"
-                ]
+                if self.language == 'en':
+                    details = [
+                        f"Total log files: {len(log_files)} (including {compressed_count} compressed files)",
+                        f"Total space used: {self._format_log_size(total_size)}",
+                        "No error or warning logs found",
+                        "Log accumulation status is normal"
+                    ]
+                else:
+                    details = [
+                        f"日志文件总数: {len(log_files)}个（包含{compressed_count}个压缩文件）",
+                        f"总占用空间: {self._format_log_size(total_size)}",
+                        "未发现错误或警告日志",
+                        "日志累积情况正常"
+                    ]
             
             return {
                 'status': status,
@@ -378,11 +577,18 @@ class FinalRecommendationsGenerator:
             }
             
         except Exception as e:
-            return {
-                'status': '❌',
-                'description': f'日志健康评估失败: {e}',
-                'details': []
-            }
+            if self.language == 'en':
+                return {
+                    'status': '❌',
+                    'description': f'Log health assessment failed: {e}',
+                    'details': []
+                }
+            else:
+                return {
+                    'status': '❌',
+                    'description': f'日志健康评估失败: {e}',
+                    'details': []
+                }
     
     def _check_log_errors(self, logs_dir: str) -> bool:
         """检查是否存在错误日志"""

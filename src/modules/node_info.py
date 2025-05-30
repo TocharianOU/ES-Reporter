@@ -45,14 +45,24 @@ class NodeInfoGenerator:
     
     def _generate_nodes_overview(self, nodes_info: Dict, nodes_stats: Dict) -> str:
         """生成节点概览总表"""
-        content = """### 4.1 节点概览总表
+        if self.language == 'en':
+            content = """### 4.1 Node Overview Table
+
+| Node Name | IP Address | Role | ES Version | Uptime | CPU Usage | Memory Usage | Disk Usage | Status |
+|-----------|------------|------|------------|--------|-----------|--------------|------------|--------|
+"""
+        else:
+            content = """### 4.1 节点概览总表
 
 | 节点名称 | IP地址 | 角色 | ES版本 | 运行时长 | CPU使用率 | 内存使用率 | 磁盘使用率 | 状态 |
 |---------|--------|------|--------|----------|-----------|------------|------------|------|
 """
         
         if not nodes_info or 'nodes' not in nodes_info:
-            content += "| N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ⚠️ 无数据 |\n\n"
+            if self.language == 'en':
+                content += "| N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ⚠️ No data |\n\n"
+            else:
+                content += "| N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | ⚠️ 无数据 |\n\n"
             return content
         
         # 按节点名称排序
@@ -83,7 +93,10 @@ class NodeInfoGenerator:
                     if current_time and start_time:
                         uptime_ms = current_time - start_time
                         uptime_days = uptime_ms // (24 * 60 * 60 * 1000)
-                        uptime = f"{uptime_days}天"
+                        if self.language == 'en':
+                            uptime = f"{uptime_days} days"
+                        else:
+                            uptime = f"{uptime_days}天"
                 
                 # CPU使用率
                 if 'os' in stats and 'cpu' in stats['os']:
@@ -116,7 +129,16 @@ class NodeInfoGenerator:
     
     def _generate_hardware_resources(self, nodes_stats: Dict) -> str:
         """生成硬件资源信息"""
-        content = """### 4.2 硬件资源信息
+        if self.language == 'en':
+            content = """### 4.2 Hardware Resources
+
+#### 4.2.1 CPU Resources Overview
+
+| Node Name | CPU Cores | Available Cores | CPU Usage | Load Average (1m/5m/15m) |
+|-----------|-----------|-----------------|-----------|---------------------------|
+"""
+        else:
+            content = """### 4.2 硬件资源信息
 
 #### 4.2.1 CPU资源概览
 
@@ -156,7 +178,15 @@ class NodeInfoGenerator:
                 
                 content += f"| {node_name} | {cpu_cores} | {available_cores} | {cpu_percent} | {load_avg} |\n"
         
-        content += """
+        if self.language == 'en':
+            content += """
+#### 4.2.2 Memory Resources Overview
+
+| Node Name | System Memory | JVM Heap (Max) | JVM Heap (Used) | Heap Usage |
+|-----------|---------------|----------------|-----------------|------------|
+"""
+        else:
+            content += """
 #### 4.2.2 内存资源概览
 
 | 节点名称 | 系统内存 | JVM堆内存(最大) | JVM堆内存(已用) | 堆使用率 |
@@ -197,7 +227,16 @@ class NodeInfoGenerator:
     
     def _generate_jvm_environment(self, nodes_info: Dict, nodes_stats: Dict) -> str:
         """生成JVM运行环境信息"""
-        content = """### 4.3 JVM运行环境
+        if self.language == 'en':
+            content = """### 4.3 JVM Runtime Environment
+
+#### 4.3.1 JVM Version and Configuration
+
+| Node Name | Java Version | JVM Version | GC Collectors | Heap Size Configuration |
+|-----------|--------------|-------------|---------------|-------------------------|
+"""
+        else:
+            content = """### 4.3 JVM运行环境
 
 #### 4.3.1 JVM版本与配置
 
@@ -233,11 +272,22 @@ class NodeInfoGenerator:
                     if 'mem' in jvm_info:
                         heap_init = jvm_info['mem'].get('heap_init', 'N/A')
                         heap_max = jvm_info['mem'].get('heap_max', 'N/A')
-                        heap_config = f"初始:{heap_init} 最大:{heap_max}"
+                        if self.language == 'en':
+                            heap_config = f"Initial:{heap_init} Max:{heap_max}"
+                        else:
+                            heap_config = f"初始:{heap_init} 最大:{heap_max}"
                 
                 content += f"| {node_name} | {java_version} | {jvm_version} | {gc_collectors} | {heap_config} |\n"
         
-        content += """
+        if self.language == 'en':
+            content += """
+#### 4.3.2 GC Performance Statistics
+
+| Node Name | Young GC (Count/Time) | Old GC (Count/Time) | Total GC Overhead |
+|-----------|----------------------|---------------------|-------------------|
+"""
+        else:
+            content += """
 #### 4.3.2 GC性能统计
 
 | 节点名称 | Young GC(次数/时间) | Old GC(次数/时间) | GC总耗时占比 |
@@ -265,11 +315,17 @@ class NodeInfoGenerator:
                         if 'young' in gc_name.lower() or 'eden' in gc_name.lower():
                             count = gc_data.get('collection_count', 0)
                             time_ms = gc_data.get('collection_time_in_millis', 0)
-                            young_gc = f"{count}次/{time_ms}ms"
+                            if self.language == 'en':
+                                young_gc = f"{count} times/{time_ms}ms"
+                            else:
+                                young_gc = f"{count}次/{time_ms}ms"
                         elif 'old' in gc_name.lower():
                             count = gc_data.get('collection_count', 0)
                             time_ms = gc_data.get('collection_time_in_millis', 0)
-                            old_gc = f"{count}次/{time_ms}ms"
+                            if self.language == 'en':
+                                old_gc = f"{count} times/{time_ms}ms"
+                            else:
+                                old_gc = f"{count}次/{time_ms}ms"
                 
                 content += f"| {node_name} | {young_gc} | {old_gc} | {gc_overhead} |\n"
         
@@ -278,7 +334,16 @@ class NodeInfoGenerator:
     
     def _generate_node_roles_config(self, nodes_info: Dict) -> str:
         """生成节点角色与配置信息"""
-        content = """### 4.4 节点角色与配置
+        if self.language == 'en':
+            content = """### 4.4 Node Roles and Configuration
+
+#### 4.4.1 Node Role Assignment Details
+
+| Node Name | Primary Role | All Roles | Node Attributes |
+|-----------|--------------|-----------|-----------------|
+"""
+        else:
+            content = """### 4.4 节点角色与配置
 
 #### 4.4.1 节点角色分配详情
 
@@ -313,7 +378,10 @@ class NodeInfoGenerator:
                 attr_list = []
                 for key, value in attributes.items():
                     attr_list.append(f"{key}:{value}")
-                node_attrs = ", ".join(attr_list) if attr_list else "无"
+                if self.language == 'en':
+                    node_attrs = ", ".join(attr_list) if attr_list else "None"
+                else:
+                    node_attrs = ", ".join(attr_list) if attr_list else "无"
                 
                 content += f"| {node_name} | {primary_role} | {all_roles} | {node_attrs} |\n"
         
@@ -322,7 +390,16 @@ class NodeInfoGenerator:
     
     def _generate_performance_metrics(self, nodes_stats: Dict, nodes_usage: Dict) -> str:
         """生成节点性能指标"""
-        content = """### 4.5 节点性能指标
+        if self.language == 'en':
+            content = """### 4.5 Node Performance Metrics
+
+#### 4.5.1 Index Operation Statistics
+
+| Node Name | Index Operations | Delete Operations | Query Operations | Avg Query Time |
+|-----------|------------------|-------------------|------------------|----------------|
+"""
+        else:
+            content = """### 4.5 节点性能指标
 
 #### 4.5.1 索引操作统计
 
@@ -369,7 +446,16 @@ class NodeInfoGenerator:
     
     def _generate_storage_shard_distribution(self, nodes_stats: Dict) -> str:
         """生成存储与分片分布信息"""
-        content = """### 4.6 存储与分片分布
+        if self.language == 'en':
+            content = """### 4.6 Storage and Shard Distribution
+
+#### 4.6.1 Node Storage Usage
+
+| Node Name | Total Storage | Used Space | Available Space | Usage Rate | Shard Count |
+|-----------|---------------|------------|-----------------|------------|-------------|
+"""
+        else:
+            content = """### 4.6 存储与分片分布
 
 #### 4.6.1 节点存储使用情况
 
@@ -417,7 +503,14 @@ class NodeInfoGenerator:
     
     def _generate_alerts_recommendations(self, nodes_stats: Dict) -> str:
         """生成异常与告警信息"""
-        content = """### 4.7 异常与告警
+        if self.language == 'en':
+            content = """### 4.7 Alerts and Recommendations
+
+#### 4.7.1 Resource Alert Check
+
+"""
+        else:
+            content = """### 4.7 异常与告警
 
 #### 4.7.1 资源告警检查
 
@@ -438,9 +531,15 @@ class NodeInfoGenerator:
                 if 'os' in stats and 'cpu' in stats['os']:
                     cpu_percent = stats['os']['cpu'].get('percent', 0)
                     if cpu_percent > 80:
-                        alerts.append(f"🔴 **{node_name}**: CPU使用率过高 ({cpu_percent}%)")
+                        if self.language == 'en':
+                            alerts.append(f"🔴 **{node_name}**: CPU usage too high ({cpu_percent}%)")
+                        else:
+                            alerts.append(f"🔴 **{node_name}**: CPU使用率过高 ({cpu_percent}%)")
                     elif cpu_percent > 60:
-                        alerts.append(f"🟡 **{node_name}**: CPU使用率较高 ({cpu_percent}%)")
+                        if self.language == 'en':
+                            alerts.append(f"🟡 **{node_name}**: CPU usage high ({cpu_percent}%)")
+                        else:
+                            alerts.append(f"🟡 **{node_name}**: CPU使用率较高 ({cpu_percent}%)")
                 
                 # 检查内存使用率
                 if 'jvm' in stats and 'mem' in stats['jvm']:
@@ -450,9 +549,15 @@ class NodeInfoGenerator:
                     if heap_max > 0:
                         heap_percent = (heap_used / heap_max) * 100
                         if heap_percent > 85:
-                            alerts.append(f"🔴 **{node_name}**: JVM堆内存使用率过高 ({heap_percent:.1f}%)")
+                            if self.language == 'en':
+                                alerts.append(f"🔴 **{node_name}**: JVM heap memory usage too high ({heap_percent:.1f}%)")
+                            else:
+                                alerts.append(f"🔴 **{node_name}**: JVM堆内存使用率过高 ({heap_percent:.1f}%)")
                         elif heap_percent > 70:
-                            alerts.append(f"🟡 **{node_name}**: JVM堆内存使用率较高 ({heap_percent:.1f}%)")
+                            if self.language == 'en':
+                                alerts.append(f"🟡 **{node_name}**: JVM heap memory usage high ({heap_percent:.1f}%)")
+                            else:
+                                alerts.append(f"🟡 **{node_name}**: JVM堆内存使用率较高 ({heap_percent:.1f}%)")
                 
                 # 检查磁盘使用率
                 if 'fs' in stats and 'total' in stats['fs']:
@@ -463,20 +568,48 @@ class NodeInfoGenerator:
                         used_bytes = total_bytes - free_bytes
                         disk_percent = (used_bytes / total_bytes) * 100
                         if disk_percent > 90:
-                            alerts.append(f"🔴 **{node_name}**: 磁盘使用率过高 ({disk_percent:.1f}%)")
+                            if self.language == 'en':
+                                alerts.append(f"🔴 **{node_name}**: Disk usage too high ({disk_percent:.1f}%)")
+                            else:
+                                alerts.append(f"🔴 **{node_name}**: 磁盘使用率过高 ({disk_percent:.1f}%)")
                         elif disk_percent > 80:
-                            alerts.append(f"🟡 **{node_name}**: 磁盘使用率较高 ({disk_percent:.1f}%)")
+                            if self.language == 'en':
+                                alerts.append(f"🟡 **{node_name}**: Disk usage high ({disk_percent:.1f}%)")
+                            else:
+                                alerts.append(f"🟡 **{node_name}**: 磁盘使用率较高 ({disk_percent:.1f}%)")
         
         if alerts:
-            content += "**当前告警**:\n"
+            if self.language == 'en':
+                content += "**Current Alerts**:\n"
+            else:
+                content += "**当前告警**:\n"
             for alert in alerts:
                 content += f"- {alert}\n"
             content += "\n"
         else:
-            content += "✅ **当前无资源告警**\n\n"
+            if self.language == 'en':
+                content += "✅ **No current resource alerts**\n\n"
+            else:
+                content += "✅ **当前无资源告警**\n\n"
         
         # 通用建议
-        content += """#### 4.7.2 优化建议
+        if self.language == 'en':
+            content += """#### 4.7.2 Optimization Recommendations
+
+**Resource Optimization Recommendations**:
+- Regularly monitor CPU, memory, and disk usage
+- When JVM heap memory usage continuously exceeds 70%, consider increasing heap memory or optimizing queries
+- When disk usage exceeds 80%, recommend cleaning old data or expanding storage
+- Monitor GC frequency, frequent Full GC may affect performance
+
+**Configuration Recommendations**:
+- Ensure all nodes have consistent ES versions
+- Check network connection quality between nodes
+- Regularly check if node load distribution is balanced
+
+"""
+        else:
+            content += """#### 4.7.2 优化建议
 
 **资源优化建议**:
 - 定期监控CPU、内存、磁盘使用率

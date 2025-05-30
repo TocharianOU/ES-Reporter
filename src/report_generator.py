@@ -45,13 +45,17 @@ class ESReportGenerator:
     
     def load_template(self) -> str:
         """加载报告模板"""
-        template_path = "templates/report_template.md"
+        # 根据语言尝试加载不同的模板文件
+        if self.language == 'en':
+            template_path = "templates/report_template_en.md"
+        else:
+            template_path = "templates/report_template.md"
         
         if os.path.exists(template_path):
             with open(template_path, 'r', encoding='utf-8') as f:
                 return f.read()
         else:
-            # 使用内置模板
+            # 如果没有找到对应语言的模板文件，使用内置动态模板
             return self.get_default_template()
     
     def get_default_template(self) -> str:

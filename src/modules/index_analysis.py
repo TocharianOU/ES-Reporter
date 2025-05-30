@@ -42,7 +42,12 @@ class IndexAnalysisGenerator:
     
     def _generate_index_overview(self) -> str:
         """生成索引概览统计"""
-        content = """### 5.1 索引概览统计
+        if self.language == 'en':
+            content = """### 5.1 Index Overview Statistics
+
+"""
+        else:
+            content = """### 5.1 索引概览统计
 
 """
         
@@ -50,7 +55,10 @@ class IndexAnalysisGenerator:
         cluster_health = self.data_loader.get_cluster_health()
         
         if not cluster_stats or 'indices' not in cluster_stats:
-            content += "❌ **无法获取索引统计信息**\n\n"
+            if self.language == 'en':
+                content += "❌ **Unable to retrieve index statistics**\n\n"
+            else:
+                content += "❌ **无法获取索引统计信息**\n\n"
             return content
         
         indices_stats = cluster_stats['indices']
@@ -68,18 +76,26 @@ class IndexAnalysisGenerator:
         total_size = indices_stats.get('store', {}).get('size', 'N/A')
         total_size_bytes = indices_stats.get('store', {}).get('size_in_bytes', 0)
         
-        content += f"""#### 5.1.1 基础统计信息
+        if self.language == 'en':
+            content += f"""| Metric | Value | Description |
+|--------|-------|-------------|
+| **Total Indices** | {total_indices:,} | Total number of indices in the cluster |
+| **Primary Shards** | {total_shards:,} | Total number of primary shards |
+| **Replica Shards** | {replica_shards:,} | Total number of replica shards |
+| **Total Documents** | {total_docs:,} | Total number of documents across all indices |
+| **Total Index Size** | {total_size:.2f} GB | Total storage size consumed by all indices |
+| **Average Index Size** | {total_size_bytes / (1024**3):.2f} GB | Average storage size per index |
 
-| 指标项 | 数值 | 说明 |
+"""
+        else:
+            content += f"""| 指标项 | 数值 | 说明 |
 |--------|------|------|
-| **索引总数** | {total_indices} | 集群中的索引数量 |
-| **分片总数** | {total_shards} | 主分片 + 副本分片 |
-| **主分片数** | {primary_shards} | 数据分片数量 |
-| **副本分片数** | {replica_shards} | 冗余备份分片数量 |
-| **副本因子** | {replication_factor:.1f} | 平均每个主分片的副本数 |
-| **文档总数** | {total_docs:,} | 所有索引的文档总数 |
-| **已删除文档** | {deleted_docs:,} | 标记为删除的文档数 |
-| **数据总大小** | {total_size} | 所有索引占用存储空间 |
+| **索引总数** | {total_indices:,} | 集群中的索引总数量 |
+| **主分片数** | {total_shards:,} | 所有主分片的总数量 |
+| **副本分片数** | {replica_shards:,} | 所有副本分片的总数量 |
+| **文档总数** | {total_docs:,} | 所有索引的文档总数量 |
+| **索引总大小** | {total_size:.2f} GB | 所有索引占用的存储总大小 |
+| **平均索引大小** | {total_size_bytes / (1024**3):.2f} GB | 每个索引的平均存储大小 |
 
 """
         
@@ -95,7 +111,19 @@ class IndexAnalysisGenerator:
             avg_docs_per_index = 0
             avg_size_per_index_str = "0B"
         
-        content += f"""#### 5.1.2 平均分布统计
+        if self.language == 'en':
+            content += f"""#### 5.1.2 Average Distribution Statistics
+
+| Metric | Value | Description |
+|--------|-------|-------------|
+| **Average Shards/Index** | {avg_shards_per_index:.1f} | Average number of shards per index |
+| **Average Primary Shards/Index** | {avg_primaries_per_index:.1f} | Average number of primary shards per index |
+| **Average Documents/Index** | {avg_docs_per_index:,} | Average number of documents per index |
+| **Average Size/Index** | {avg_size_per_index_str} | Average storage size per index |
+
+"""
+        else:
+            content += f"""#### 5.1.2 平均分布统计
 
 | 指标项 | 数值 | 说明 |
 |--------|------|------|
@@ -114,15 +142,26 @@ class IndexAnalysisGenerator:
             initializing_shards = cluster_health.get('initializing_shards', 0)
             unassigned_shards = cluster_health.get('unassigned_shards', 0)
             
-            content += f"""#### 5.1.3 分片健康状态
+            if self.language == 'en':
+                content += f"""#### 5.1.3 Shard Health Statistics
 
-| 状态类型 | 数量 | 百分比 | 说明 |
-|----------|------|--------|------|
-| **活跃分片** | {active_shards} | {(active_shards/total_shards*100):.1f}% | 正常工作的分片 |
-| **活跃主分片** | {active_primary_shards} | {(active_primary_shards/primary_shards*100):.1f}% | 正常工作的主分片 |
-| **迁移中分片** | {relocating_shards} | {(relocating_shards/total_shards*100):.1f}% | 正在节点间迁移的分片 |
-| **初始化分片** | {initializing_shards} | {(initializing_shards/total_shards*100):.1f}% | 正在初始化的分片 |
-| **未分配分片** | {unassigned_shards} | {(unassigned_shards/total_shards*100):.1f}% | 未能分配到节点的分片 |
+| Metric | Value | Description |
+|--------|-------|-------------|
+| **Active Primary Shards** | {active_primary_shards:,} | Number of active primary shards |
+| **Active Total Shards** | {active_shards:,} | Total number of active shards (primary + replica) |
+| **Unassigned Shards** | {unassigned_shards:,} | Number of unassigned shards |
+| **Shard Activity Rate** | {active_shards/total_shards*100:.1f}% | Percentage of active shards |
+
+"""
+            else:
+                content += f"""#### 5.1.3 分片健康统计
+
+| 指标项 | 数值 | 说明 |
+|--------|------|------|
+| **活跃主分片** | {active_primary_shards:,} | 活跃的主分片数量 |
+| **活跃总分片** | {active_shards:,} | 活跃的总分片数（主分片+副本分片） |
+| **未分配分片** | {unassigned_shards:,} | 未分配的分片数量 |
+| **分片活跃率** | {active_shards/total_shards*100:.1f}% | 活跃分片的百分比 |
 
 """
         
@@ -130,7 +169,16 @@ class IndexAnalysisGenerator:
     
     def _generate_index_details_table(self) -> str:
         """生成索引详细信息表"""
-        content = """### 5.2 索引详细信息表
+        if self.language == 'en':
+            content = """### 5.2 Index Details Table
+
+#### 5.2.1 Typical Index Information (Top 20 Representative Indices)
+
+| Index Name | Status | Primary Shards | Replicas | Document Count | Index Size | Type Description |
+|------------|--------|----------------|----------|----------------|------------|------------------|
+"""
+        else:
+            content = """### 5.2 索引详细信息表
 
 #### 5.2.1 典型索引信息（20个代表性索引）
 
@@ -227,7 +275,10 @@ class IndexAnalysisGenerator:
         large_indices = sorted(size_categories['large'], key=lambda x: x[1]['store_bytes'], reverse=True)[:8]
         for index_name, info in large_indices:
             size_gb = info['store_bytes'] / (1024**3)
-            typical_indices.append((index_name, info, f"大索引({size_gb:.1f}GB)"))
+            if self.language == 'en':
+                typical_indices.append((index_name, info, f"Large Index({size_gb:.1f}GB)"))
+            else:
+                typical_indices.append((index_name, info, f"大索引({size_gb:.1f}GB)"))
         
         # 2. 选择主要前缀的代表索引 (8个)
         main_prefixes = sorted(prefix_groups.items(), key=lambda x: len(x[1]), reverse=True)[:8]
@@ -240,16 +291,28 @@ class IndexAnalysisGenerator:
             index_name, info = largest_in_prefix
             
             # 确定类型描述
-            if prefix == 'i':
-                type_desc = "应用主索引"
-            elif prefix == 'logs':
-                type_desc = "日志索引"
-            elif prefix == 'metrics':
-                type_desc = "指标索引"
-            elif prefix == 'geonames':
-                type_desc = "地理数据索引"
+            if self.language == 'en':
+                if prefix == 'i':
+                    type_desc = "Main App Index"
+                elif prefix == 'logs':
+                    type_desc = "Log Index"
+                elif prefix == 'metrics':
+                    type_desc = "Metrics Index"
+                elif prefix == 'geonames':
+                    type_desc = "Geo Data Index"
+                else:
+                    type_desc = f"{prefix} Index"
             else:
-                type_desc = f"{prefix}类索引"
+                if prefix == 'i':
+                    type_desc = "应用主索引"
+                elif prefix == 'logs':
+                    type_desc = "日志索引"
+                elif prefix == 'metrics':
+                    type_desc = "指标索引"
+                elif prefix == 'geonames':
+                    type_desc = "地理数据索引"
+                else:
+                    type_desc = f"{prefix}类索引"
             
             typical_indices.append((index_name, info, type_desc))
         
@@ -261,7 +324,10 @@ class IndexAnalysisGenerator:
                 break
             if index_name not in [t[0] for t in typical_indices]:
                 size_mb = info['store_bytes'] / (1024**2)
-                typical_indices.append((index_name, info, f"中等索引({size_mb:.1f}MB)"))
+                if self.language == 'en':
+                    typical_indices.append((index_name, info, f"Medium Index({size_mb:.1f}MB)"))
+                else:
+                    typical_indices.append((index_name, info, f"中等索引({size_mb:.1f}MB)"))
                 added_medium += 1
         
         # 4. 选择一些小索引 (2个)
@@ -272,9 +338,15 @@ class IndexAnalysisGenerator:
                 break
             if index_name not in [t[0] for t in typical_indices]:
                 if info['docs'] > 0:
-                    typical_indices.append((index_name, info, f"小索引({info['docs']:,}文档)"))
+                    if self.language == 'en':
+                        typical_indices.append((index_name, info, f"Small Index({info['docs']:,} docs)"))
+                    else:
+                        typical_indices.append((index_name, info, f"小索引({info['docs']:,}文档)"))
                 else:
-                    typical_indices.append((index_name, info, "空索引"))
+                    if self.language == 'en':
+                        typical_indices.append((index_name, info, "Empty Index"))
+                    else:
+                        typical_indices.append((index_name, info, "空索引"))
                 added_small += 1
         
         # 确保返回20个索引
@@ -282,7 +354,14 @@ class IndexAnalysisGenerator:
     
     def _generate_index_health_analysis(self) -> str:
         """生成索引健康状态分析"""
-        content = """### 5.3 索引健康状态分析
+        if self.language == 'en':
+            content = """### 5.3 Index Health Analysis
+
+#### 5.3.1 Index Status Distribution
+
+"""
+        else:
+            content = """### 5.3 索引健康状态分析
 
 #### 5.3.1 索引状态分布
 
@@ -292,7 +371,10 @@ class IndexAnalysisGenerator:
         indices_data = self.data_loader.load_json_file('indices.json')
         
         if not indices_data:
-            content += "❌ **无法获取索引状态信息**\n\n"
+            if self.language == 'en':
+                content += "❌ **Unable to retrieve index status information**\n\n"
+            else:
+                content += "❌ **无法获取索引状态信息**\n\n"
             return content
         
         # 统计不同状态的索引
@@ -335,7 +417,16 @@ class IndexAnalysisGenerator:
         
         total_indices = len(index_status)
         
-        content += f"""| 健康状态 | 索引数量 | 百分比 | 说明 |
+        if self.language == 'en':
+            content += f"""| Health Status | Index Count | Percentage | Description |
+|---------------|-------------|------------|-------------|
+| 🟢 **Green** | {green_indices} | {(green_indices/total_indices*100):.1f}% | All shards normal |
+| 🟡 **Yellow** | {yellow_indices} | {(yellow_indices/total_indices*100):.1f}% | Some replica shards abnormal |
+| 🔴 **Red** | {red_indices} | {(red_indices/total_indices*100):.1f}% | Primary shards abnormal |
+
+"""
+        else:
+            content += f"""| 健康状态 | 索引数量 | 百分比 | 说明 |
 |----------|----------|--------|------|
 | 🟢 **绿色** | {green_indices} | {(green_indices/total_indices*100):.1f}% | 所有分片正常 |
 | 🟡 **黄色** | {yellow_indices} | {(yellow_indices/total_indices*100):.1f}% | 部分副本分片异常 |
@@ -345,28 +436,53 @@ class IndexAnalysisGenerator:
         
         # 问题索引详情
         if problem_indices:
-            content += "#### 5.3.2 问题分片详情\n\n"
-            content += "| 索引名称 | 分片ID | 类型 | 状态 | 节点 |\n"
-            content += "|----------|--------|------|------|------|\n"
-            
-            # 显示前10个问题分片
-            for problem in problem_indices[:10]:
-                shard_type = "主分片" if problem['type'] == 'p' else "副本"
-                content += f"| {problem['index']} | {problem['shard']} | {shard_type} | {problem['state']} | {problem['node']} |\n"
-            
-            if len(problem_indices) > 10:
-                content += f"| ... | ... | ... | ... | ... |\n"
-                content += f"| **共{len(problem_indices)}个问题分片** | | | | |\n"
+            if self.language == 'en':
+                content += "#### 5.3.2 Problem Shard Details\n\n"
+                content += "| Index Name | Shard ID | Type | State | Node |\n"
+                content += "|------------|----------|------|-------|------|\n"
+                
+                # 显示前10个问题分片
+                for problem in problem_indices[:10]:
+                    shard_type = "Primary" if problem['type'] == 'p' else "Replica"
+                    content += f"| {problem['index']} | {problem['shard']} | {shard_type} | {problem['state']} | {problem['node']} |\n"
+                
+                if len(problem_indices) > 10:
+                    content += f"| ... | ... | ... | ... | ... |\n"
+                    content += f"| **Total {len(problem_indices)} problem shards** | | | | |\n"
+            else:
+                content += "#### 5.3.2 问题分片详情\n\n"
+                content += "| 索引名称 | 分片ID | 类型 | 状态 | 节点 |\n"
+                content += "|----------|--------|------|------|------|\n"
+                
+                # 显示前10个问题分片
+                for problem in problem_indices[:10]:
+                    shard_type = "主分片" if problem['type'] == 'p' else "副本"
+                    content += f"| {problem['index']} | {problem['shard']} | {shard_type} | {problem['state']} | {problem['node']} |\n"
+                
+                if len(problem_indices) > 10:
+                    content += f"| ... | ... | ... | ... | ... |\n"
+                    content += f"| **共{len(problem_indices)}个问题分片** | | | | |\n"
         else:
-            content += "#### 5.3.2 分片状态\n\n"
-            content += "✅ **所有分片状态正常**\n"
+            if self.language == 'en':
+                content += "#### 5.3.2 Shard Status\n\n"
+                content += "✅ **All shard status normal**\n"
+            else:
+                content += "#### 5.3.2 分片状态\n\n"
+                content += "✅ **所有分片状态正常**\n"
         
         content += "\n"
         return content
     
     def _generate_index_patterns_distribution(self) -> str:
         """生成索引模式与分布"""
-        content = """### 5.4 索引模式与分布
+        if self.language == 'en':
+            content = """### 5.4 Index Patterns and Distribution
+
+#### 5.4.1 Index Naming Pattern Analysis
+
+"""
+        else:
+            content = """### 5.4 索引模式与分布
 
 #### 5.4.1 索引命名模式分析
 
@@ -374,7 +490,10 @@ class IndexAnalysisGenerator:
         
         indices_data = self.data_loader.load_json_file('indices.json')
         if not indices_data:
-            content += "❌ **无法获取索引信息**\n\n"
+            if self.language == 'en':
+                content += "❌ **Unable to retrieve index information**\n\n"
+            else:
+                content += "❌ **无法获取索引信息**\n\n"
             return content
         
         # 提取所有唯一索引名
@@ -400,7 +519,17 @@ class IndexAnalysisGenerator:
             else:
                 patterns['application_indices'].append(index_name)
         
-        content += f"""| 索引类型 | 数量 | 示例 |
+        if self.language == 'en':
+            content += f"""| Index Type | Count | Examples |
+|------------|-------|----------|
+| **System Indices** | {len(patterns['system_indices'])} | {', '.join(patterns['system_indices'][:3])}{'...' if len(patterns['system_indices']) > 3 else ''} |
+| **Monitoring Indices** | {len(patterns['monitoring_indices'])} | {', '.join(patterns['monitoring_indices'][:3])}{'...' if len(patterns['monitoring_indices']) > 3 else ''} |
+| **Application Indices** | {len(patterns['application_indices'])} | {', '.join(patterns['application_indices'][:3])}{'...' if len(patterns['application_indices']) > 3 else ''} |
+| **Time Series Indices** | {len(patterns['time_series_indices'])} | {', '.join(patterns['time_series_indices'][:3])}{'...' if len(patterns['time_series_indices']) > 3 else ''} |
+
+"""
+        else:
+            content += f"""| 索引类型 | 数量 | 示例 |
 |----------|------|------|
 | **系统索引** | {len(patterns['system_indices'])} | {', '.join(patterns['system_indices'][:3])}{'...' if len(patterns['system_indices']) > 3 else ''} |
 | **监控索引** | {len(patterns['monitoring_indices'])} | {', '.join(patterns['monitoring_indices'][:3])}{'...' if len(patterns['monitoring_indices']) > 3 else ''} |
@@ -413,7 +542,14 @@ class IndexAnalysisGenerator:
     
     def _generate_shard_distribution_analysis(self) -> str:
         """生成分片分布分析"""
-        content = """### 5.5 分片分布分析
+        if self.language == 'en':
+            content = """### 5.5 Shard Distribution Analysis
+
+#### 5.5.1 Shard Distribution per Node
+
+"""
+        else:
+            content = """### 5.5 分片分布分析
 
 #### 5.5.1 各节点分片分布
 
@@ -421,7 +557,10 @@ class IndexAnalysisGenerator:
         
         indices_data = self.data_loader.load_json_file('indices.json')
         if not indices_data:
-            content += "❌ **无法获取分片信息**\n\n"
+            if self.language == 'en':
+                content += "❌ **Unable to retrieve shard information**\n\n"
+            else:
+                content += "❌ **无法获取分片信息**\n\n"
             return content
         
         # 统计各节点分片分布
@@ -444,8 +583,12 @@ class IndexAnalysisGenerator:
         # 按节点名排序
         sorted_nodes = sorted(node_shard_stats.items())
         
-        content += "| 节点名称 | 主分片数 | 副本分片数 | 总分片数 | 分片数据大小 |\n"
-        content += "|----------|----------|------------|----------|-------------|\n"
+        if self.language == 'en':
+            content += "| Node Name | Primary Shards | Replica Shards | Total Shards | Shard Data Size |\n"
+            content += "|-----------|----------------|----------------|--------------|----------------|\n"
+        else:
+            content += "| 节点名称 | 主分片数 | 副本分片数 | 总分片数 | 分片数据大小 |\n"
+            content += "|----------|----------|------------|----------|-------------|\n"
         
         for node, stats in sorted_nodes:
             total_shards = stats['primary'] + stats['replica']
@@ -453,7 +596,10 @@ class IndexAnalysisGenerator:
             content += f"| {node} | {stats['primary']} | {stats['replica']} | {total_shards} | {size_formatted} |\n"
         
         # 分片大小分布统计
-        content += "\n#### 5.5.2 分片大小分布\n\n"
+        if self.language == 'en':
+            content += "\n#### 5.5.2 Shard Size Distribution\n\n"
+        else:
+            content += "\n#### 5.5.2 分片大小分布\n\n"
         
         shard_sizes = []
         for shard in indices_data:
@@ -473,8 +619,12 @@ class IndexAnalysisGenerator:
                 ('> 10GB', lambda x: x >= 10*1024*1024*1024)
             ]
             
-            content += "| 分片大小范围 | 分片数量 | 百分比 |\n"
-            content += "|--------------|----------|--------|\n"
+            if self.language == 'en':
+                content += "| Shard Size Range | Shard Count | Percentage |\n"
+                content += "|------------------|-------------|------------|\n"
+            else:
+                content += "| 分片大小范围 | 分片数量 | 百分比 |\n"
+                content += "|--------------|----------|--------|\n"
             
             for range_name, range_func in size_ranges:
                 count = sum(1 for size in shard_sizes if range_func(size))
@@ -487,18 +637,32 @@ class IndexAnalysisGenerator:
             avg_size = sum(shard_sizes) // len(shard_sizes)
             median_size = shard_sizes[len(shard_sizes)//2]
             
-            content += f"\n**分片大小统计**:\n"
-            content += f"- 最小分片: {self.data_loader.format_bytes(min_size)}\n"
-            content += f"- 最大分片: {self.data_loader.format_bytes(max_size)}\n"
-            content += f"- 平均大小: {self.data_loader.format_bytes(avg_size)}\n"
-            content += f"- 中位数: {self.data_loader.format_bytes(median_size)}\n"
+            if self.language == 'en':
+                content += f"\n**Shard Size Statistics**:\n"
+                content += f"- Minimum Shard: {self.data_loader.format_bytes(min_size)}\n"
+                content += f"- Maximum Shard: {self.data_loader.format_bytes(max_size)}\n"
+                content += f"- Average Size: {self.data_loader.format_bytes(avg_size)}\n"
+                content += f"- Median Size: {self.data_loader.format_bytes(median_size)}\n"
+            else:
+                content += f"\n**分片大小统计**:\n"
+                content += f"- 最小分片: {self.data_loader.format_bytes(min_size)}\n"
+                content += f"- 最大分片: {self.data_loader.format_bytes(max_size)}\n"
+                content += f"- 平均大小: {self.data_loader.format_bytes(avg_size)}\n"
+                content += f"- 中位数: {self.data_loader.format_bytes(median_size)}\n"
         
         content += "\n"
         return content
     
     def _generate_index_performance_metrics(self) -> str:
         """生成索引性能指标"""
-        content = """### 5.6 索引性能指标
+        if self.language == 'en':
+            content = """### 5.6 Index Performance Metrics
+
+#### 5.6.1 Index Operation Statistics
+
+"""
+        else:
+            content = """### 5.6 索引性能指标
 
 #### 5.6.1 索引操作统计
 
@@ -506,7 +670,10 @@ class IndexAnalysisGenerator:
         
         nodes_stats = self.data_loader.get_nodes_stats()
         if not nodes_stats or 'nodes' not in nodes_stats:
-            content += "❌ **无法获取性能指标**\n\n"
+            if self.language == 'en':
+                content += "❌ **Unable to retrieve performance metrics**\n\n"
+            else:
+                content += "❌ **无法获取性能指标**\n\n"
             return content
         
         # 汇总所有节点的索引操作统计
@@ -532,7 +699,18 @@ class IndexAnalysisGenerator:
         avg_query_time = (total_query_time / total_search) if total_search > 0 else 0
         avg_fetch_time = (total_fetch_time / total_search) if total_search > 0 else 0
         
-        content += f"""| 性能指标 | 数值 | 说明 |
+        if self.language == 'en':
+            content += f"""| Performance Metric | Value | Description |
+|-------------------|-------|-------------|
+| **Total Index Operations** | {total_indexing:,} | Cumulative document indexing count for cluster |
+| **Total Delete Operations** | {total_delete:,} | Cumulative document deletion count for cluster |
+| **Total Queries** | {total_search:,} | Cumulative query count for cluster |
+| **Average Query Time** | {avg_query_time:.2f}ms | Average time per query |
+| **Average Fetch Time** | {avg_fetch_time:.2f}ms | Average time per fetch |
+
+"""
+        else:
+            content += f"""| 性能指标 | 数值 | 说明 |
 |----------|------|------|
 | **总索引操作数** | {total_indexing:,} | 集群累计索引文档次数 |
 | **总删除操作数** | {total_delete:,} | 集群累计删除文档次数 |
@@ -548,8 +726,20 @@ class IndexAnalysisGenerator:
             qc = cluster_stats['indices']['query_cache']
             cache_hit_rate = (qc.get('hit_count', 0) / qc.get('total_count', 1)) * 100
             
-            content += "#### 5.6.2 查询缓存性能\n\n"
-            content += f"""| 缓存指标 | 数值 | 说明 |
+            if self.language == 'en':
+                content += "#### 5.6.2 Query Cache Performance\n\n"
+                content += f"""| Cache Metric | Value | Description |
+|--------------|-------|-------------|
+| **Cache Memory Usage** | {qc.get('memory_size', 'N/A')} | Query cache memory consumption |
+| **Cache Hit Rate** | {cache_hit_rate:.1f}% | Query cache hit percentage |
+| **Total Cache Requests** | {qc.get('total_count', 0):,} | Total query cache requests |
+| **Cache Hits** | {qc.get('hit_count', 0):,} | Query cache hit count |
+| **Cache Evictions** | {qc.get('evictions', 0):,} | Number of cache entry evictions |
+
+"""
+            else:
+                content += "#### 5.6.2 查询缓存性能\n\n"
+                content += f"""| 缓存指标 | 数值 | 说明 |
 |----------|------|------|
 | **缓存内存使用** | {qc.get('memory_size', 'N/A')} | 查询缓存占用内存 |
 | **缓存命中率** | {cache_hit_rate:.1f}% | 查询缓存命中百分比 |
@@ -564,7 +754,12 @@ class IndexAnalysisGenerator:
     
     def _generate_index_optimization_recommendations(self) -> str:
         """生成索引优化建议"""
-        content = """### 5.7 索引优化建议
+        if self.language == 'en':
+            content = """### 5.7 Index Optimization Recommendations
+
+"""
+        else:
+            content = """### 5.7 索引优化建议
 
 """
         
@@ -640,45 +835,96 @@ class IndexAnalysisGenerator:
             
             # 生成问题报告
             if high_doc_count_indices:
-                issues.append(f"发现{len(high_doc_count_indices)}个索引文档数超过2亿")
-                for index_name, docs in high_doc_count_indices[:3]:
-                    recommendations.append(f"索引 {index_name} 文档数({docs:,})过多，建议按时间或业务维度拆分")
+                if self.language == 'en':
+                    issues.append(f"Found {len(high_doc_count_indices)} indices with over 200 million documents")
+                    for index_name, docs in high_doc_count_indices[:3]:
+                        recommendations.append(f"Index {index_name} document count ({docs:,}) is too high, recommend splitting by time or business dimension")
+                else:
+                    issues.append(f"发现{len(high_doc_count_indices)}个索引文档数超过2亿")
+                    for index_name, docs in high_doc_count_indices[:3]:
+                        recommendations.append(f"索引 {index_name} 文档数({docs:,})过多，建议按时间或业务维度拆分")
             
             if oversized_shards:
-                issues.append(f"发现{len(oversized_shards)}个索引分片超过50GB")
-                for index_name, size in oversized_shards[:3]:
-                    size_gb = size / (1024**3)
-                    recommendations.append(f"索引 {index_name} 最大分片({size_gb:.1f}GB)过大，建议增加主分片数")
+                if self.language == 'en':
+                    issues.append(f"Found {len(oversized_shards)} indices with shards over 50GB")
+                    for index_name, size in oversized_shards[:3]:
+                        size_gb = size / (1024**3)
+                        recommendations.append(f"Index {index_name} maximum shard ({size_gb:.1f}GB) is too large, recommend increasing primary shard count")
+                else:
+                    issues.append(f"发现{len(oversized_shards)}个索引分片超过50GB")
+                    for index_name, size in oversized_shards[:3]:
+                        size_gb = size / (1024**3)
+                        recommendations.append(f"索引 {index_name} 最大分片({size_gb:.1f}GB)过大，建议增加主分片数")
             
             if undersized_shards:
-                issues.append(f"发现{len(undersized_shards)}个索引分片小于10GB")
-                recommendations.append("小分片过多会影响性能，建议合并相关索引或减少主分片数")
+                if self.language == 'en':
+                    issues.append(f"Found {len(undersized_shards)} indices with shards under 10GB")
+                    recommendations.append("Too many small shards affect performance, recommend merging related indices or reducing primary shard count")
+                else:
+                    issues.append(f"发现{len(undersized_shards)}个索引分片小于10GB")
+                    recommendations.append("小分片过多会影响性能，建议合并相关索引或减少主分片数")
             
             if inefficient_shard_distribution:
-                issues.append(f"发现{len(inefficient_shard_distribution)}个索引分片分布不合理")
-                recommendations.append(f"当前数据节点数({data_node_count})，建议主分片数不超过节点数的2倍")
+                if self.language == 'en':
+                    issues.append(f"Found {len(inefficient_shard_distribution)} indices with inefficient shard distribution")
+                    recommendations.append(f"Current data node count ({data_node_count}), recommend primary shard count not exceed 2x node count")
+                else:
+                    issues.append(f"发现{len(inefficient_shard_distribution)}个索引分片分布不合理")
+                    recommendations.append(f"当前数据节点数({data_node_count})，建议主分片数不超过节点数的2倍")
         
         # 输出建议
         if issues:
-            content += "#### 5.7.1 发现的配置问题\n\n"
-            for issue in issues:
-                content += f"- 🟡 {issue}\n"
-            content += "\n"
+            if self.language == 'en':
+                content += "#### 5.7.1 Configuration Issues Found\n\n"
+                for issue in issues:
+                    content += f"- 🟡 {issue}\n"
+                content += "\n"
+            else:
+                content += "#### 5.7.1 发现的配置问题\n\n"
+                for issue in issues:
+                    content += f"- 🟡 {issue}\n"
+                content += "\n"
         else:
-            content += "#### 5.7.1 索引配置状态\n\n"
-            content += "✅ **索引配置符合最佳实践**\n\n"
+            if self.language == 'en':
+                content += "#### 5.7.1 Index Configuration Status\n\n"
+                content += "✅ **Index configuration follows best practices**\n\n"
+            else:
+                content += "#### 5.7.1 索引配置状态\n\n"
+                content += "✅ **索引配置符合最佳实践**\n\n"
         
-        content += "#### 5.7.2 优化建议\n\n"
+        if self.language == 'en':
+            content += "#### 5.7.2 Optimization Recommendations\n\n"
+        else:
+            content += "#### 5.7.2 优化建议\n\n"
         
         if recommendations:
             for rec in recommendations:
                 content += f"- **{rec}**\n"
         else:
-            content += "- 当前索引配置良好，建议继续保持\n"
+            if self.language == 'en':
+                content += "- Current index configuration is good, recommend maintaining\n"
+            else:
+                content += "- 当前索引配置良好，建议继续保持\n"
         
         # 添加通用最佳实践
-        content += "\n#### 5.7.3 索引配置最佳实践\n\n"
-        content += f"""**分片配置原则**:
+        if self.language == 'en':
+            content += "\n#### 5.7.3 Index Configuration Best Practices\n\n"
+            content += f"""**Shard Configuration Principles**:
+- Control single shard size between 10GB-50GB
+- Single index document count should not exceed 200 million
+- Primary shard count should not exceed 2x the number of data nodes (Current data nodes: {data_node_count})
+- Prioritize controlling shard size over excessive sharding for data management
+
+**Performance Optimization Recommendations**:
+- Regularly monitor shard distribution balance
+- Consider using ILM for historical data lifecycle management
+- Set replica count reasonably, balancing availability and storage cost
+- Regularly clean up unused indices to free up storage space
+
+"""
+        else:
+            content += "\n#### 5.7.3 索引配置最佳实践\n\n"
+            content += f"""**分片配置原则**:
 - 单个分片大小控制在10GB-50GB之间
 - 单个索引文档数不超过2亿条
 - 主分片数量不超过数据节点数的2倍（当前数据节点：{data_node_count}个）

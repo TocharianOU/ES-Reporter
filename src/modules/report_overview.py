@@ -5,7 +5,7 @@ from ..i18n import I18n
 
 
 class ReportOverviewGenerator:
-    """报告概述生成器"""
+    """Report overview generator / 报告概述生成器"""
     
     def __init__(self, data_loader: ESDataLoader, language: str = "zh"):
         self.data_loader = data_loader
@@ -13,34 +13,34 @@ class ReportOverviewGenerator:
         self.i18n = I18n(language)
     
     def generate(self) -> str:
-        """生成报告概述内容"""
+        """Generate report overview content / 生成报告概述内容"""
         licenses = self.data_loader.get_licenses()
         cluster_health = self.data_loader.get_cluster_health()
         manifest = self.data_loader.get_manifest()
         
-        # 获取客户名称
+        # Get customer name / 获取客户名称
         customer_name = "N/A"
         if licenses and 'license' in licenses:
             customer_name = licenses['license'].get('issued_to', 'N/A')
         
-        # 获取集群名称
+        # Get cluster name / 获取集群名称
         cluster_name = "N/A"
         if cluster_health:
             cluster_name = cluster_health.get('cluster_name', 'N/A')
         
-        # 获取巡检日期
+        # Get inspection date / 获取巡检日期
         collection_date = "N/A"
         if manifest:
             collection_date_str = manifest.get('collectionDate', 'N/A')
             if collection_date_str != "N/A":
                 try:
-                    # 解析ISO格式时间
+                    # Parse ISO format time / 解析ISO格式时间
                     dt = datetime.fromisoformat(collection_date_str.replace('Z', '+00:00'))
                     collection_date = dt.strftime('%Y-%m-%d %H:%M:%S')
                 except:
                     collection_date = collection_date_str
         
-        # 获取ES版本
+        # Get ES version / 获取ES版本
         es_version = "N/A"
         if manifest and 'Product Version' in manifest:
             version_info = manifest['Product Version']
@@ -49,7 +49,7 @@ class ReportOverviewGenerator:
             else:
                 es_version = str(version_info)
         
-        # 获取许可证信息
+        # Get license information / 获取许可证信息
         license_type = "N/A"
         license_status = "N/A"
         license_expiry = "N/A"
@@ -60,7 +60,7 @@ class ReportOverviewGenerator:
             license_type = license_info.get('type', 'N/A')
             license_status = license_info.get('status', 'N/A')
             
-            # 格式化过期时间
+            # Format expiry time / 格式化过期时间
             expiry_date_str = license_info.get('expiry_date', 'N/A')
             if expiry_date_str != "N/A":
                 try:
@@ -71,13 +71,31 @@ class ReportOverviewGenerator:
             
             max_nodes = license_info.get('max_nodes', 'N/A')
         
-        # 获取诊断工具版本
+        # Get diagnostic tool version / 获取诊断工具版本
         diag_version = "N/A"
         if manifest:
             diag_version = manifest.get('diagVersion', 'N/A')
         
-        # 生成表格内容
-        overview_content = f"""| 项目 | 内容 |
+        # Generate table content based on language / 根据语言生成表格内容
+        if self.language == 'en':
+            overview_content = f"""| Item | Content |
+|------|---------|
+| **Customer Name** | {customer_name} |
+| **Cluster Name** | {cluster_name} |
+| **Inspection Date** | {collection_date} |
+| **ES Version** | {es_version} |
+| **Software License** | {license_type} ({license_status}) |
+| **License Owner** | {customer_name} |
+| **Expiry Date** | {license_expiry} |
+| **License Node Limit** | {max_nodes} |
+| **Diagnostic Tool Version** | {diag_version} |
+
+| Item | Content |
+|------|---------|
+| **Inspector** | [To be filled] |
+| **Contact** | [To be filled] |"""
+        else:
+            overview_content = f"""| 项目 | 内容 |
 |------|------|
 | **客户名称** | {customer_name} |
 | **集群名称** | {cluster_name} |
@@ -97,7 +115,7 @@ class ReportOverviewGenerator:
         return overview_content
     
     def get_case_data(self) -> Dict[str, Any]:
-        """获取用于检查的原始数据"""
+        """Get raw data for inspection / 获取用于检查的原始数据"""
         return {
             "licenses": self.data_loader.get_licenses(),
             "cluster_health": self.data_loader.get_cluster_health(),

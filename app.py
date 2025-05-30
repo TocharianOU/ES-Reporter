@@ -417,6 +417,52 @@ def list_reports():
         'reports': sorted(report_list, key=lambda x: x['generated_at'], reverse=True)
     })
 
+@app.route('/api/translations')
+def get_translations():
+    """获取翻译文本"""
+    lang = request.args.get('lang', 'zh')
+    if lang not in ['zh', 'en']:
+        lang = 'zh'
+    
+    # 设置语言
+    i18n.set_language(lang)
+    
+    # 返回UI相关的翻译
+    translations = {
+        'title': i18n.t('title', 'ui'),
+        'upload_area_title': i18n.t('upload_area_title', 'ui'),
+        'upload_area_desc': i18n.t('upload_area_desc', 'ui'),
+        'select_file': i18n.t('select_file', 'ui'),
+        'generating_report': i18n.t('generating_report', 'ui'),
+        'report_generated': i18n.t('report_generated', 'ui'),
+        'download_html': i18n.t('download_html', 'ui'),
+        'download_markdown': i18n.t('download_markdown', 'ui'),
+        'view_reports': i18n.t('view_reports', 'ui'),
+        'processing': i18n.t('processing', 'ui'),
+        'upload_success': i18n.t('upload_success', 'ui'),
+        'language': lang
+    }
+    
+    return jsonify(translations)
+
+@app.route('/api/set-language', methods=['POST'])
+def set_language():
+    """设置语言"""
+    data = request.get_json()
+    language = data.get('language', 'zh')
+    
+    if language not in ['zh', 'en']:
+        language = 'zh'
+    
+    # 设置语言
+    i18n.set_language(language)
+    
+    return jsonify({
+        'success': True,
+        'language': language,
+        'message': i18n.t('language_switched', 'ui')
+    })
+
 @app.errorhandler(413)
 def too_large(e):
     """文件过大处理"""

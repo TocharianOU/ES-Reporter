@@ -59,7 +59,19 @@ class ClusterBasicInfoGenerator:
             cluster_name = cluster_health.get('cluster_name', 'N/A')
             cluster_status = cluster_health.get('status', 'N/A')
         
-        return f"""### 3.1 集群标识信息
+        if self.language == 'en':
+            return f"""### 3.1 Cluster Identity Information
+
+| Item | Value |
+|------|-------|
+| **Cluster UUID** | `{cluster_uuid}` |
+| **Cluster Name** | `{cluster_name}` |
+| **Cluster Status** | `{cluster_status.upper()}` |
+| **Cluster Description** | Production Environment Cluster |
+
+"""
+        else:
+            return f"""### 3.1 集群标识信息
 
 | 项目 | 值 |
 |------|------|
@@ -72,12 +84,20 @@ class ClusterBasicInfoGenerator:
     
     def _generate_master_info(self, master_info: List, nodes_info: Dict) -> str:
         """生成主节点信息"""
-        master_content = """### 3.2 主节点信息
+        if self.language == 'en':
+            master_content = """### 3.2 Master Node Information
+
+"""
+        else:
+            master_content = """### 3.2 主节点信息
 
 """
         
         if not master_info or not isinstance(master_info, list) or len(master_info) == 0:
-            master_content += "⚠️ **警告**: 无法获取主节点信息\n\n"
+            if self.language == 'en':
+                master_content += "⚠️ **Warning**: Unable to retrieve master node information\n\n"
+            else:
+                master_content += "⚠️ **警告**: 无法获取主节点信息\n\n"
             return master_content
         
         master = master_info[0]
@@ -97,7 +117,19 @@ class ClusterBasicInfoGenerator:
                     master_version = node_data.get('version', 'N/A')
                     break
         
-        master_content += f"""| 项目 | 值 |
+        if self.language == 'en':
+            master_content += f"""| Item | Value |
+|------|-------|
+| **Current Master Node** | `{master_name}` |
+| **Node ID** | `{master_id}` |
+| **Master Node Address** | `{master_host}:{master_ip}` |
+| **Node Roles** | `{master_roles}` |
+| **ES Version** | `{master_version}` |
+| **Master Node Status** | Active |
+
+"""
+        else:
+            master_content += f"""| 项目 | 值 |
 |------|------|
 | **当前主节点** | `{master_name}` |
 | **节点ID** | `{master_id}` |
@@ -111,7 +143,12 @@ class ClusterBasicInfoGenerator:
     
     def _generate_topology_info(self, cluster_stats: Dict, nodes_info: Dict) -> str:
         """生成集群拓扑结构信息"""
-        content = """### 3.3 集群拓扑结构
+        if self.language == 'en':
+            content = """### 3.3 Cluster Topology
+
+"""
+        else:
+            content = """### 3.3 集群拓扑结构
 
 """
         
@@ -123,7 +160,17 @@ class ClusterBasicInfoGenerator:
             total_nodes = cluster_stats['_nodes'].get('total', 'N/A')
             successful_nodes = cluster_stats['_nodes'].get('successful', 'N/A')
         
-        content += f"""#### 3.3.1 节点总览
+        if self.language == 'en':
+            content += f"""#### 3.3.1 Node Overview
+
+| Item | Count |
+|------|-------|
+| **Total Nodes** | {total_nodes} |
+| **Responding Nodes** | {successful_nodes} |
+
+"""
+        else:
+            content += f"""#### 3.3.1 节点总览
 
 | 项目 | 数量 |
 |------|------|
@@ -135,27 +182,48 @@ class ClusterBasicInfoGenerator:
         # 分析节点角色分布
         if nodes_info and 'nodes' in nodes_info:
             role_stats = self._analyze_node_roles(nodes_info['nodes'])
-            content += """#### 3.3.2 节点角色分布
+            
+            if self.language == 'en':
+                content += """#### 3.3.2 Node Role Distribution
+
+| Role Type | Count | Node List |
+|-----------|-------|-----------|
+"""
+            else:
+                content += """#### 3.3.2 节点角色分布
 
 | 角色类型 | 数量 | 节点列表 |
 |---------|------|----------|
 """
+            
             for role, info in role_stats.items():
                 nodes_list = ", ".join(info['nodes'][:5])  # 最多显示5个节点
                 if len(info['nodes']) > 5:
-                    nodes_list += f", ... (共{len(info['nodes'])}个)"
+                    if self.language == 'en':
+                        nodes_list += f", ... (total {len(info['nodes'])} nodes)"
+                    else:
+                        nodes_list += f", ... (共{len(info['nodes'])}个)"
                 content += f"| **{role}** | {info['count']} | {nodes_list} |\n"
             
             content += "\n"
             
             # IP地址分布
             ip_distribution = self._analyze_ip_distribution(nodes_info['nodes'])
-            content += f"""#### 3.3.3 网络分布
+            
+            if self.language == 'en':
+                content += f"""#### 3.3.3 Network Distribution
+
+- **IP Address Segment Distribution**: 
+"""
+                for ip_segment, count in ip_distribution.items():
+                    content += f"  - `{ip_segment}`: {count} nodes\n"
+            else:
+                content += f"""#### 3.3.3 网络分布
 
 - **IP地址段分布**: 
 """
-            for ip_segment, count in ip_distribution.items():
-                content += f"  - `{ip_segment}`: {count} 个节点\n"
+                for ip_segment, count in ip_distribution.items():
+                    content += f"  - `{ip_segment}`: {count} 个节点\n"
             
             content += "\n"
         
@@ -163,12 +231,22 @@ class ClusterBasicInfoGenerator:
     
     def _generate_settings_overview(self, cluster_settings: Dict, nodes_info: Dict) -> str:
         """生成集群设置概览"""
-        content = """### 3.4 集群设置概览
+        if self.language == 'en':
+            content = """### 3.4 Cluster Settings Overview
+
+"""
+        else:
+            content = """### 3.4 集群设置概览
 
 """
         
         # 关键配置参数
-        content += """#### 3.4.1 关键配置参数
+        if self.language == 'en':
+            content += """#### 3.4.1 Key Configuration Parameters
+
+"""
+        else:
+            content += """#### 3.4.1 关键配置参数
 
 """
         
@@ -184,7 +262,18 @@ class ClusterBasicInfoGenerator:
             network_host = settings.get('network', {}).get('host', 'N/A')
             discovery_type = "zen" if 'discovery' in settings else 'N/A'
             
-            content += f"""| 配置项 | 值 |
+            if self.language == 'en':
+                content += f"""| Configuration Item | Value |
+|-------------------|-------|
+| **cluster.name** | `{cluster_name}` |
+| **network.host** | `{network_host}` |
+| **http.port** | `{http_port}` |
+| **transport.port** | `{transport_port}` |
+| **Discovery Mechanism** | `{discovery_type}` |
+
+"""
+            else:
+                content += f"""| 配置项 | 值 |
 |--------|------|
 | **cluster.name** | `{cluster_name}` |
 | **network.host** | `{network_host}` |
@@ -196,32 +285,52 @@ class ClusterBasicInfoGenerator:
         
         # 动态设置
         if cluster_settings:
-            content += """#### 3.4.2 动态配置
+            if self.language == 'en':
+                content += """#### 3.4.2 Dynamic Configuration
 
 """
+            else:
+                content += """#### 3.4.2 动态配置
+
+"""
+            
             persistent = cluster_settings.get('persistent', {})
             transient = cluster_settings.get('transient', {})
             
             if persistent:
-                content += "**持久化设置**:\n"
+                if self.language == 'en':
+                    content += "**Persistent Settings**:\n"
+                else:
+                    content += "**持久化设置**:\n"
                 for key, value in persistent.items():
                     content += f"- `{key}`: `{value}`\n"
                 content += "\n"
             
             if transient:
-                content += "**临时设置**:\n"
+                if self.language == 'en':
+                    content += "**Transient Settings**:\n"
+                else:
+                    content += "**临时设置**:\n"
                 for key, value in transient.items():
                     content += f"- `{key}`: `{value}`\n"
                 content += "\n"
             
             if not persistent and not transient:
-                content += "- 暂无动态配置\n\n"
+                if self.language == 'en':
+                    content += "- No dynamic configurations\n\n"
+                else:
+                    content += "- 暂无动态配置\n\n"
         
         return content
     
     def _generate_status_statistics(self, cluster_stats: Dict, cluster_health: Dict) -> str:
         """生成集群状态统计"""
-        content = """### 3.5 集群状态统计
+        if self.language == 'en':
+            content = """### 3.5 Cluster Status Statistics
+
+"""
+        else:
+            content = """### 3.5 集群状态统计
 
 """
         
@@ -241,7 +350,16 @@ class ClusterBasicInfoGenerator:
             timestamp_ms = cluster_stats['timestamp']
             cluster_timestamp = self.data_loader.format_timestamp(timestamp_ms)
         
-        content += f"""| 项目 | 值 |
+        if self.language == 'en':
+            content += f"""| Item | Value |
+|------|-------|
+| **Data Collection Time** | {cluster_timestamp} |
+| **Pending Tasks** | {pending_tasks} |
+| **Max Waiting Time** | {max_waiting_time} |
+
+"""
+        else:
+            content += f"""| 项目 | 值 |
 |------|------|
 | **数据收集时间** | {cluster_timestamp} |
 | **待处理任务数** | {pending_tasks} |
@@ -253,7 +371,12 @@ class ClusterBasicInfoGenerator:
     
     def _generate_storage_architecture(self, cluster_stats: Dict) -> str:
         """生成存储架构信息"""
-        content = """### 3.6 存储架构
+        if self.language == 'en':
+            content = """### 3.6 Storage Architecture
+
+"""
+        else:
+            content = """### 3.6 存储架构
 
 """
         
@@ -271,7 +394,16 @@ class ClusterBasicInfoGenerator:
                 avg_per_node_bytes = size_bytes / total_nodes
                 avg_per_node = self.data_loader.format_bytes(avg_per_node_bytes)
             
-            content += f"""| 项目 | 值 |
+            if self.language == 'en':
+                content += f"""| Item | Value |
+|------|-------|
+| **Total Storage Capacity** | {total_size} |
+| **Storage Bytes** | {size_bytes:,} bytes |
+| **Average Per Node Storage** | {avg_per_node} |
+
+"""
+            else:
+                content += f"""| 项目 | 值 |
 |------|------|
 | **总存储容量** | {total_size} |
 | **存储字节数** | {size_bytes:,} bytes |
@@ -283,7 +415,12 @@ class ClusterBasicInfoGenerator:
     
     def _generate_shard_strategy(self, cluster_settings: Dict, cluster_stats: Dict) -> str:
         """生成分片分布策略"""
-        content = """### 3.7 分片分布策略
+        if self.language == 'en':
+            content = """### 3.7 Shard Distribution Strategy
+
+"""
+        else:
+            content = """### 3.7 分片分布策略
 
 """
         
@@ -295,7 +432,16 @@ class ClusterBasicInfoGenerator:
             primary_shards = shards_info.get('primaries', 'N/A')
             replication_factor = shards_info.get('replication', 'N/A')
             
-            content += f"""| 项目 | 值 |
+            if self.language == 'en':
+                content += f"""| Item | Value |
+|------|-------|
+| **Total Shards** | {total_shards} |
+| **Primary Shards** | {primary_shards} |
+| **Replication Factor** | {replication_factor} |
+
+"""
+            else:
+                content += f"""| 项目 | 值 |
 |------|------|
 | **总分片数** | {total_shards} |
 | **主分片数** | {primary_shards} |
@@ -304,7 +450,12 @@ class ClusterBasicInfoGenerator:
 """
         
         # 分片分配策略 - 根据实际设置动态生成描述
-        content += """#### 分片分配设置
+        if self.language == 'en':
+            content += """#### Shard Allocation Settings
+
+"""
+        else:
+            content += """#### 分片分配设置
 
 """
         
@@ -312,11 +463,28 @@ class ClusterBasicInfoGenerator:
             persistent = cluster_settings.get('persistent', {})
             rebalance_setting = persistent.get('cluster.routing.rebalance.enable', 'all')
             
-            content += f"- **重平衡策略**: `{rebalance_setting}`\n"
+            if self.language == 'en':
+                content += f"- **Rebalance Strategy**: `{rebalance_setting}`\n"
+            else:
+                content += f"- **重平衡策略**: `{rebalance_setting}`\n"
             
             # 根据不同的重平衡设置提供相应的说明
             if rebalance_setting == 'none':
-                content += """- **当前状态**: ⚠️ **分片重平衡已被禁用**
+                if self.language == 'en':
+                    content += """- **Current Status**: ⚠️ **Shard rebalancing is disabled**
+- **Impact Description**: 
+  - Cluster will not automatically move shards to optimize distribution
+  - Shards will not be automatically reallocated when nodes are added or removed
+  - May cause load imbalance between nodes
+- **Use Cases**: 
+  - Prevent shard migration during maintenance
+  - Avoid unnecessary network and disk IO
+  - Maintain cluster stability
+- **Recommendation**: Confirm if this is a temporary setting, recommend restoring to `all` after maintenance
+
+"""
+                else:
+                    content += """- **当前状态**: ⚠️ **分片重平衡已被禁用**
 - **影响说明**: 
   - 集群不会自动移动分片来优化分布
   - 新增或移除节点时分片不会自动重新分配
@@ -329,7 +497,16 @@ class ClusterBasicInfoGenerator:
 
 """
             elif rebalance_setting == 'primaries':
-                content += """- **当前状态**: 仅允许主分片重平衡
+                if self.language == 'en':
+                    content += """- **Current Status**: Only primary shard rebalancing allowed
+- **Impact Description**: 
+  - Only primary shards participate in automatic reallocation
+  - Replica shards maintain current distribution
+- **Allocation Strategy**: Based on available space and load balancing of primary shards
+
+"""
+                else:
+                    content += """- **当前状态**: 仅允许主分片重平衡
 - **影响说明**: 
   - 只有主分片会参与自动重新分配
   - 副本分片保持当前分布不变
@@ -337,7 +514,16 @@ class ClusterBasicInfoGenerator:
 
 """
             elif rebalance_setting == 'replicas':
-                content += """- **当前状态**: 仅允许副本分片重平衡
+                if self.language == 'en':
+                    content += """- **Current Status**: Only replica shard rebalancing allowed
+- **Impact Description**: 
+  - Only replica shards participate in automatic reallocation
+  - Primary shards maintain current distribution
+- **Allocation Strategy**: Based on available space and load balancing of replica shards
+
+"""
+                else:
+                    content += """- **当前状态**: 仅允许副本分片重平衡
 - **影响说明**: 
   - 只有副本分片会参与自动重新分配
   - 主分片保持当前分布不变
@@ -345,7 +531,16 @@ class ClusterBasicInfoGenerator:
 
 """
             else:  # 'all' 或其他值
-                content += """- **当前状态**: 允许所有分片重平衡 (默认)
+                if self.language == 'en':
+                    content += """- **Current Status**: All shard rebalancing allowed (default)
+- **Allocation Strategy**: 
+  - Based on available space and shard count balancing
+  - Both primary and replica shards participate in automatic reallocation
+  - Cluster automatically optimizes shard distribution
+
+"""
+                else:
+                    content += """- **当前状态**: 允许所有分片重平衡 (默认)
 - **分配策略**: 
   - 基于可用空间和分片数量平衡
   - 主分片和副本分片都参与自动重新分配
@@ -353,7 +548,13 @@ class ClusterBasicInfoGenerator:
 
 """
         else:
-            content += """- **重平衡策略**: `all` (默认设置)
+            if self.language == 'en':
+                content += """- **Rebalance Strategy**: `all` (default setting)
+- **Allocation Strategy**: Based on available space and shard count balancing
+
+"""
+            else:
+                content += """- **重平衡策略**: `all` (默认设置)
 - **分配策略**: 基于可用空间和分片数量平衡
 
 """

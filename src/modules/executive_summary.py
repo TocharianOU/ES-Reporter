@@ -20,19 +20,31 @@ class ExecutiveSummaryGenerator:
         # 获取集群状态
         status = "unknown"
         status_icon = "❓"
-        status_desc = "未知状态"
+        if self.language == 'en':
+            status_desc = "Unknown status"
+        else:
+            status_desc = "未知状态"
         
         if cluster_health:
             status = cluster_health.get('status', 'unknown').lower()
             if status == 'green':
                 status_icon = "🟢"
-                status_desc = "Green: 集群健康，所有分片正常"
+                if self.language == 'en':
+                    status_desc = "Green: Cluster is healthy, all shards are allocated"
+                else:
+                    status_desc = "Green: 集群健康，所有分片正常"
             elif status == 'yellow':
                 status_icon = "🟡" 
-                status_desc = "Yellow: 存在未分配的副本分片"
+                if self.language == 'en':
+                    status_desc = "Yellow: Some replica shards are unassigned"
+                else:
+                    status_desc = "Yellow: 存在未分配的副本分片"
             elif status == 'red':
                 status_icon = "🔴"
-                status_desc = "Red: 存在未分配的主分片"
+                if self.language == 'en':
+                    status_desc = "Red: Some primary shards are unassigned"
+                else:
+                    status_desc = "Red: 存在未分配的主分片"
         
         # 获取关键指标
         total_nodes = cluster_health.get('number_of_nodes', 'N/A') if cluster_health else 'N/A'
@@ -58,8 +70,24 @@ class ExecutiveSummaryGenerator:
             if 'docs' in indices_info and 'count' in indices_info['docs']:
                 doc_count = f"{indices_info['docs']['count']:,}"
         
-        # 生成内容
-        summary_content = f"""### 2.1 总体评估
+        # 根据语言生成内容
+        if self.language == 'en':
+            summary_content = f"""### 2.1 Overall Assessment
+- **Cluster Status**: {status.upper()}
+  - {status_icon} {status_desc}
+
+### 2.2 Key Metrics Overview
+- **Total Nodes**: {total_nodes}
+- **Data Nodes**: {data_nodes}
+- **Total Indices**: {index_count}
+- **Primary Shards**: {primary_shards}
+- **Total Shards**: {total_shards}
+- **Total Data Size**: {total_size}
+- **Total Documents**: {doc_count}
+
+### 2.3 Health Status Details"""
+        else:
+            summary_content = f"""### 2.1 总体评估
 - **集群状态**: {status.upper()}
   - {status_icon} {status_desc}
 
@@ -81,18 +109,32 @@ class ExecutiveSummaryGenerator:
             unassigned_shards = cluster_health.get('unassigned_shards', 0)
             active_shards_percent = cluster_health.get('active_shards_percent_as_number', 0)
             
-            summary_content += f"""
+            if self.language == 'en':
+                summary_content += f"""
+- **Shard Health Status**:
+  - Active Shards Percentage: {active_shards_percent}%
+  - Relocating Shards: {relocating_shards}
+  - Initializing Shards: {initializing_shards}
+  - Unassigned Shards: {unassigned_shards}"""
+                
+                if unassigned_shards > 0:
+                    summary_content += f"\n  - ⚠️ **Warning**: {unassigned_shards} unassigned shards require attention"
+                
+                if relocating_shards > 0:
+                    summary_content += f"\n  - ℹ️ **Info**: {relocating_shards} shards are being relocated"
+            else:
+                summary_content += f"""
 - **分片健康状态**:
   - 活跃分片百分比: {active_shards_percent}%
   - 重新分配中的分片: {relocating_shards}
   - 初始化中的分片: {initializing_shards}
   - 未分配的分片: {unassigned_shards}"""
-            
-            if unassigned_shards > 0:
-                summary_content += f"\n  - ⚠️ **注意**: 存在 {unassigned_shards} 个未分配分片，需要关注"
-            
-            if relocating_shards > 0:
-                summary_content += f"\n  - ℹ️ **信息**: 有 {relocating_shards} 个分片正在重新分配"
+                
+                if unassigned_shards > 0:
+                    summary_content += f"\n  - ⚠️ **注意**: 存在 {unassigned_shards} 个未分配分片，需要关注"
+                
+                if relocating_shards > 0:
+                    summary_content += f"\n  - ℹ️ **信息**: 有 {relocating_shards} 个分片正在重新分配"
 
         return summary_content
     
