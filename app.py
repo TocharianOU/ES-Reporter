@@ -29,9 +29,6 @@ from src.html_converter import markdown_to_html, create_html_template
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB 最大文件大小
 
-# 配置应用根路径
-app.config['APPLICATION_ROOT'] = '/esreport'
-
 # 全局变量存储任务状态
 tasks = {}
 reports = {}
