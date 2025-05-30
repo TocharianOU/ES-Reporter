@@ -23,7 +23,7 @@
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/TocharianOU/ES-Reporter.git
 cd es_report_tool
 
 # 安装依赖
