@@ -30,7 +30,7 @@ A modern web application for analyzing Elasticsearch diagnostic files and genera
 
 ```bash
 # Clone the project
-git clone https://github.com/TocharianOU/ES-Reporter.git
+git clone https://github.com/TocharianOU/es-report-tool.git
 cd ES-Reporter
 
 # Install dependencies
