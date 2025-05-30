@@ -146,6 +146,9 @@ docker build -t es-report-tool .
 
 # 运行容器
 docker run -p 5000:5000 es-report-tool
+
+# 后台运行容器
+docker run -d -p 5000:5000 --name es-report-server es-report-tool
 ```
 
 ## 🤝 贡献指南

@@ -146,6 +146,9 @@ docker build -t es-report-tool .
 
 # Run container
 docker run -p 5000:5000 es-report-tool
+
+# for background side
+docker run -d -p 5000:5000 --name es-report-server es-report-tool
 ```
 
 ## 🤝 Contributing

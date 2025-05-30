@@ -262,6 +262,7 @@
 
         let uploadedFile = null;
         let reportData = null;
+        let isProcessing = false; // 添加处理状态标志
         
         // DOM 元素
         const dropZone = document.getElementById('dropZone');
@@ -284,17 +285,26 @@
         const downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
 
         // 事件监听器
-        selectFileBtn.addEventListener('click', () => {
-            fileInput.click();
+        selectFileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!isProcessing) {
+                fileInput.click();
+            }
         });
 
-        dropZone.addEventListener('click', () => {
-            fileInput.click();
+        dropZone.addEventListener('click', (e) => {
+            // 只有当点击的不是选择文件按钮时才触发
+            if (e.target !== selectFileBtn && !selectFileBtn.contains(e.target) && !isProcessing) {
+                fileInput.click();
+            }
         });
 
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropZone.classList.add('drag-over');
+            if (!isProcessing) {
+                dropZone.classList.add('drag-over');
+            }
         });
 
         dropZone.addEventListener('dragleave', () => {
@@ -304,19 +314,23 @@
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.classList.remove('drag-over');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileSelect(files[0]);
+            if (!isProcessing) {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
             }
         });
 
         fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
+            if (e.target.files.length > 0 && !isProcessing) {
                 handleFileSelect(e.target.files[0]);
             }
         });
 
         function handleFileSelect(file) {
+            if (isProcessing) return; // 如果正在处理，直接返回
+            
             if (!file.name.toLowerCase().endsWith('.zip')) {
                 showError('请选择 .zip 格式的文件');
                 return;
@@ -348,8 +362,11 @@
 
         // 生成报告
         generateReportBtn.addEventListener('click', async () => {
-            if (!uploadedFile) return;
+            if (!uploadedFile || isProcessing) return; // 防止重复提交
 
+            isProcessing = true; // 设置处理状态
+            generateReportBtn.disabled = true; // 禁用按钮
+            
             hideError();
             reportSection.classList.add('hidden');
             processingStatus.classList.remove('hidden');
@@ -364,15 +381,21 @@
             try {
                 // 模拟上传进度
                 setTimeout(() => {
-                    updateStatus('fas fa-archive animate-spin', '正在解压文件...', '解压诊断文件并验证格式', 30);
+                    if (isProcessing) { // 检查是否仍在处理中
+                        updateStatus('fas fa-archive animate-spin', '正在解压文件...', '解压诊断文件并验证格式', 30);
+                    }
                 }, 500);
 
                 setTimeout(() => {
-                    updateStatus('fas fa-search animate-spin-slow', '正在分析数据...', '分析集群状态和配置信息', 50);
+                    if (isProcessing) {
+                        updateStatus('fas fa-search animate-spin-slow', '正在分析数据...', '分析集群状态和配置信息', 50);
+                    }
                 }, 1500);
 
                 setTimeout(() => {
-                    updateStatus('fas fa-chart-line animate-pulse', '正在生成报告...', '生成详细的巡检报告', 80);
+                    if (isProcessing) {
+                        updateStatus('fas fa-chart-line animate-pulse', '正在生成报告...', '生成详细的巡检报告', 80);
+                    }
                 }, 3000);
 
                 const response = await fetch(`${API_BASE}/api/upload-diagnostic`, {
@@ -402,17 +425,24 @@
                     progressBar.classList.remove('uploading');
                     
                     setTimeout(() => {
-                        reportData = result;
-                        displayReport(result.report_content, result.html_content);
-                        processingStatus.classList.add('hidden');
+                        if (isProcessing) {
+                            reportData = result;
+                            displayReport(result.report_content, result.html_content);
+                            processingStatus.classList.add('hidden');
+                            isProcessing = false; // 处理完成，重置状态
+                        }
                     }, 1000);
                 } else {
                     showError(result.message || '报告生成失败');
                     processingStatus.classList.add('hidden');
+                    isProcessing = false; // 重置状态
+                    generateReportBtn.disabled = false; // 重新启用按钮
                 }
             } catch (error) {
                 showError('网络错误：' + error.message);
                 processingStatus.classList.add('hidden');
+                isProcessing = false; // 重置状态
+                generateReportBtn.disabled = false; // 重新启用按钮
             }
         });
 
