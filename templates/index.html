@@ -380,6 +380,21 @@
                     body: formData
                 });
 
+                console.log('请求URL:', `${API_BASE}/api/upload-diagnostic`);
+                console.log('响应状态:', response.status);
+                console.log('响应头:', response.headers);
+
+                // 检查响应内容类型
+                const contentType = response.headers.get('content-type');
+                console.log('内容类型:', contentType);
+
+                if (!contentType || !contentType.includes('application/json')) {
+                    // 如果不是JSON，读取文本内容查看实际返回了什么
+                    const textResponse = await response.text();
+                    console.error('非JSON响应内容:', textResponse.substring(0, 200));
+                    throw new Error('服务器返回非JSON响应: ' + textResponse.substring(0, 100));
+                }
+
                 const result = await response.json();
 
                 if (result.success) {
