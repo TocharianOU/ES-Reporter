@@ -29,9 +29,19 @@ from src.html_converter import markdown_to_html, create_html_template
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB 最大文件大小
 
+# 配置应用根路径
+app.config['APPLICATION_ROOT'] = '/esreport'
+
 # 全局变量存储任务状态
 tasks = {}
 reports = {}
+
+# 在所有路由前添加调试信息
+@app.before_request
+def log_request_info():
+    print(f"Request path: {request.path}")
+    print(f"Request url: {request.url}")
+    print(f"Request base url: {request.base_url}")
 
 def markdown_to_html(markdown_content):
     """
@@ -168,7 +178,8 @@ def health():
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
         'service': 'Elasticsearch 巡检工具',
-        'version': '2.0.0'
+        'version': '2.0.0',
+        'path': request.path
     })
 
 @app.route('/api/upload-diagnostic', methods=['POST'])
