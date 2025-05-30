@@ -248,6 +248,18 @@
     </div>
 
     <script>
+        // 动态检测基础路径
+        const getBasePath = () => {
+            const path = window.location.pathname;
+            if (path.startsWith('/esreport/') || path === '/esreport') {
+                return '/esreport';
+            }
+            return '';
+        };
+
+        const API_BASE = getBasePath();
+        console.log('检测到基础路径:', API_BASE);
+
         let uploadedFile = null;
         let reportData = null;
         
@@ -363,7 +375,7 @@
                     updateStatus('fas fa-chart-line animate-pulse', '正在生成报告...', '生成详细的巡检报告', 80);
                 }, 3000);
 
-                const response = await fetch('/api/upload-diagnostic', {
+                const response = await fetch(`${API_BASE}/api/upload-diagnostic`, {
                     method: 'POST',
                     body: formData
                 });
@@ -472,7 +484,7 @@
             if (!reportData || !reportData.report_id) return;
 
             try {
-                const response = await fetch(`/api/download-markdown/${reportData.report_id}`);
+                const response = await fetch(`${API_BASE}/api/download-markdown/${reportData.report_id}`);
                 if (response.ok) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
@@ -504,7 +516,7 @@
             if (!reportData || !reportData.report_id) return;
 
             try {
-                const response = await fetch(`/api/download-html/${reportData.report_id}`);
+                const response = await fetch(`${API_BASE}/api/download-html/${reportData.report_id}`);
                 if (response.ok) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
