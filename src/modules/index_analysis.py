@@ -76,6 +76,16 @@ class IndexAnalysisGenerator:
         total_size = indices_stats.get('store', {}).get('size', 'N/A')
         total_size_bytes = indices_stats.get('store', {}).get('size_in_bytes', 0)
         
+        # 安全格式化大小数据
+        if isinstance(total_size_bytes, (int, float)) and total_size_bytes > 0:
+            total_size_gb = total_size_bytes / (1024**3)
+            avg_size_gb = total_size_bytes / (1024**3) / max(total_indices, 1)
+            total_size_display = f"{total_size_gb:.2f}"
+            avg_size_display = f"{avg_size_gb:.2f}"
+        else:
+            total_size_display = "N/A"
+            avg_size_display = "N/A"
+        
         if self.language == 'en':
             content += f"""| Metric | Value | Description |
 |--------|-------|-------------|
@@ -83,8 +93,8 @@ class IndexAnalysisGenerator:
 | **Primary Shards** | {total_shards:,} | Total number of primary shards |
 | **Replica Shards** | {replica_shards:,} | Total number of replica shards |
 | **Total Documents** | {total_docs:,} | Total number of documents across all indices |
-| **Total Index Size** | {total_size:.2f} GB | Total storage size consumed by all indices |
-| **Average Index Size** | {total_size_bytes / (1024**3):.2f} GB | Average storage size per index |
+| **Total Index Size** | {total_size_display} GB | Total storage size consumed by all indices |
+| **Average Index Size** | {avg_size_display} GB | Average storage size per index |
 
 """
         else:
@@ -94,14 +104,18 @@ class IndexAnalysisGenerator:
 | **主分片数** | {total_shards:,} | 所有主分片的总数量 |
 | **副本分片数** | {replica_shards:,} | 所有副本分片的总数量 |
 | **文档总数** | {total_docs:,} | 所有索引的文档总数量 |
-| **索引总大小** | {total_size:.2f} GB | 所有索引占用的存储总大小 |
-| **平均索引大小** | {total_size_bytes / (1024**3):.2f} GB | 每个索引的平均存储大小 |
+| **索引总大小** | {total_size_display} GB | 所有索引占用的存储总大小 |
+| **平均索引大小** | {avg_size_display} GB | 每个索引的平均存储大小 |
 
 """
         
         # 平均统计
         avg_shards_per_index = indices_stats.get('shards', {}).get('index', {}).get('shards', {}).get('avg', 0)
         avg_primaries_per_index = indices_stats.get('shards', {}).get('index', {}).get('primaries', {}).get('avg', 0)
+        
+        # 安全格式化平均值
+        avg_shards_display = f"{avg_shards_per_index:.1f}" if isinstance(avg_shards_per_index, (int, float)) else "N/A"
+        avg_primaries_display = f"{avg_primaries_per_index:.1f}" if isinstance(avg_primaries_per_index, (int, float)) else "N/A"
         
         if total_indices > 0:
             avg_docs_per_index = total_docs // total_indices
@@ -116,8 +130,8 @@ class IndexAnalysisGenerator:
 
 | Metric | Value | Description |
 |--------|-------|-------------|
-| **Average Shards/Index** | {avg_shards_per_index:.1f} | Average number of shards per index |
-| **Average Primary Shards/Index** | {avg_primaries_per_index:.1f} | Average number of primary shards per index |
+| **Average Shards/Index** | {avg_shards_display} | Average number of shards per index |
+| **Average Primary Shards/Index** | {avg_primaries_display} | Average number of primary shards per index |
 | **Average Documents/Index** | {avg_docs_per_index:,} | Average number of documents per index |
 | **Average Size/Index** | {avg_size_per_index_str} | Average storage size per index |
 
@@ -127,8 +141,8 @@ class IndexAnalysisGenerator:
 
 | 指标项 | 数值 | 说明 |
 |--------|------|------|
-| **平均分片数/索引** | {avg_shards_per_index:.1f} | 每个索引的平均分片数 |
-| **平均主分片数/索引** | {avg_primaries_per_index:.1f} | 每个索引的平均主分片数 |
+| **平均分片数/索引** | {avg_shards_display} | 每个索引的平均分片数 |
+| **平均主分片数/索引** | {avg_primaries_display} | 每个索引的平均主分片数 |
 | **平均文档数/索引** | {avg_docs_per_index:,} | 每个索引的平均文档数 |
 | **平均大小/索引** | {avg_size_per_index_str} | 每个索引的平均存储大小 |
 
@@ -142,6 +156,12 @@ class IndexAnalysisGenerator:
             initializing_shards = cluster_health.get('initializing_shards', 0)
             unassigned_shards = cluster_health.get('unassigned_shards', 0)
             
+            # 安全计算活跃率
+            if isinstance(total_shards, (int, float)) and total_shards > 0:
+                activity_rate = f"{active_shards/total_shards*100:.1f}%"
+            else:
+                activity_rate = "N/A"
+            
             if self.language == 'en':
                 content += f"""#### 5.1.3 Shard Health Statistics
 
@@ -150,7 +170,7 @@ class IndexAnalysisGenerator:
 | **Active Primary Shards** | {active_primary_shards:,} | Number of active primary shards |
 | **Active Total Shards** | {active_shards:,} | Total number of active shards (primary + replica) |
 | **Unassigned Shards** | {unassigned_shards:,} | Number of unassigned shards |
-| **Shard Activity Rate** | {active_shards/total_shards*100:.1f}% | Percentage of active shards |
+| **Shard Activity Rate** | {activity_rate} | Percentage of active shards |
 
 """
             else:
@@ -161,7 +181,7 @@ class IndexAnalysisGenerator:
 | **活跃主分片** | {active_primary_shards:,} | 活跃的主分片数量 |
 | **活跃总分片** | {active_shards:,} | 活跃的总分片数（主分片+副本分片） |
 | **未分配分片** | {unassigned_shards:,} | 未分配的分片数量 |
-| **分片活跃率** | {active_shards/total_shards*100:.1f}% | 活跃分片的百分比 |
+| **分片活跃率** | {activity_rate} | 活跃分片的百分比 |
 
 """
         
@@ -417,20 +437,30 @@ class IndexAnalysisGenerator:
         
         total_indices = len(index_status)
         
+        # 安全计算百分比
+        if total_indices > 0:
+            green_percentage = f"{(green_indices/total_indices*100):.1f}%"
+            yellow_percentage = f"{(yellow_indices/total_indices*100):.1f}%"
+            red_percentage = f"{(red_indices/total_indices*100):.1f}%"
+        else:
+            green_percentage = "0.0%"
+            yellow_percentage = "0.0%"
+            red_percentage = "0.0%"
+        
         if self.language == 'en':
             content += f"""| Health Status | Index Count | Percentage | Description |
 |---------------|-------------|------------|-------------|
-| 🟢 **Green** | {green_indices} | {(green_indices/total_indices*100):.1f}% | All shards normal |
-| 🟡 **Yellow** | {yellow_indices} | {(yellow_indices/total_indices*100):.1f}% | Some replica shards abnormal |
-| 🔴 **Red** | {red_indices} | {(red_indices/total_indices*100):.1f}% | Primary shards abnormal |
+| 🟢 **Green** | {green_indices} | {green_percentage} | All shards normal |
+| 🟡 **Yellow** | {yellow_indices} | {yellow_percentage} | Some replica shards abnormal |
+| 🔴 **Red** | {red_indices} | {red_percentage} | Primary shards abnormal |
 
 """
         else:
             content += f"""| 健康状态 | 索引数量 | 百分比 | 说明 |
 |----------|----------|--------|------|
-| 🟢 **绿色** | {green_indices} | {(green_indices/total_indices*100):.1f}% | 所有分片正常 |
-| 🟡 **黄色** | {yellow_indices} | {(yellow_indices/total_indices*100):.1f}% | 部分副本分片异常 |
-| 🔴 **红色** | {red_indices} | {(red_indices/total_indices*100):.1f}% | 主分片异常 |
+| 🟢 **绿色** | {green_indices} | {green_percentage} | 所有分片正常 |
+| 🟡 **黄色** | {yellow_indices} | {yellow_percentage} | 部分副本分片异常 |
+| 🔴 **红色** | {red_indices} | {red_percentage} | 主分片异常 |
 
 """
         
@@ -724,16 +754,23 @@ class IndexAnalysisGenerator:
         cluster_stats = self.data_loader.get_cluster_stats()
         if cluster_stats and 'indices' in cluster_stats and 'query_cache' in cluster_stats['indices']:
             qc = cluster_stats['indices']['query_cache']
-            cache_hit_rate = (qc.get('hit_count', 0) / qc.get('total_count', 1)) * 100
+            total_count = qc.get('total_count', 0)
+            hit_count = qc.get('hit_count', 0)
+            
+            # 安全计算缓存命中率
+            if total_count > 0:
+                cache_hit_rate = f"{(hit_count / total_count * 100):.1f}%"
+            else:
+                cache_hit_rate = "N/A"
             
             if self.language == 'en':
                 content += "#### 5.6.2 Query Cache Performance\n\n"
                 content += f"""| Cache Metric | Value | Description |
 |--------------|-------|-------------|
 | **Cache Memory Usage** | {qc.get('memory_size', 'N/A')} | Query cache memory consumption |
-| **Cache Hit Rate** | {cache_hit_rate:.1f}% | Query cache hit percentage |
-| **Total Cache Requests** | {qc.get('total_count', 0):,} | Total query cache requests |
-| **Cache Hits** | {qc.get('hit_count', 0):,} | Query cache hit count |
+| **Cache Hit Rate** | {cache_hit_rate} | Query cache hit percentage |
+| **Total Cache Requests** | {total_count:,} | Total query cache requests |
+| **Cache Hits** | {hit_count:,} | Query cache hit count |
 | **Cache Evictions** | {qc.get('evictions', 0):,} | Number of cache entry evictions |
 
 """
@@ -742,9 +779,9 @@ class IndexAnalysisGenerator:
                 content += f"""| 缓存指标 | 数值 | 说明 |
 |----------|------|------|
 | **缓存内存使用** | {qc.get('memory_size', 'N/A')} | 查询缓存占用内存 |
-| **缓存命中率** | {cache_hit_rate:.1f}% | 查询缓存命中百分比 |
-| **缓存总请求** | {qc.get('total_count', 0):,} | 查询缓存总请求数 |
-| **缓存命中数** | {qc.get('hit_count', 0):,} | 查询缓存命中次数 |
+| **缓存命中率** | {cache_hit_rate} | 查询缓存命中百分比 |
+| **缓存总请求** | {total_count:,} | 查询缓存总请求数 |
+| **缓存命中数** | {hit_count:,} | 查询缓存命中次数 |
 | **缓存驱逐数** | {qc.get('evictions', 0):,} | 缓存条目被驱逐次数 |
 
 """
