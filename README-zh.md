@@ -30,7 +30,7 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/TocharianOU/ES-Reporter.git
+git clone https://github.com/TocharianOU/es-report-tool.git
 cd es_report_tool
 
 # 安装依赖
