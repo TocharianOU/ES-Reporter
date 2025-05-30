@@ -39,7 +39,6 @@ Thumbs.db
 # Project specific
 output/
 temp_uploads/
-*.md
 local-diagnostics-*/
 
 # Development tools
@@ -48,7 +47,7 @@ htmlcov/
 .coverage
 .mypy_cache/
 
-# Documentation
+# Documentation (exclude specific files but keep README)
 docs/
 *.rst
 LICENSE
