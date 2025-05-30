@@ -1,162 +1,169 @@
-# Elasticsearch 巡检工具 🔍
+# Elasticsearch Inspection Tool 🔍
 
-一个用于分析Elasticsearch诊断文件并生成详细的巡检报告的Web应用，。
+[中文](README-zh.md) | **English**
 
-## ✨ 功能特性
+A modern web application for analyzing Elasticsearch diagnostic files and generating comprehensive inspection reports.
 
-- 🌐 **Web界面**: 现代化的拖拽上传界面
-- 📁 **ZIP文件支持**: 自动解压和分析Elasticsearch诊断文件  
-- 🔄 **实时进度**: 动态进度条显示处理状态
-- 📊 **智能分析**: 自动分析集群健康状态、配置和性能
-- 📄 **多格式报告**: 支持Markdown和HTML格式下载
-- 🎨 **美观展示**: 优化的HTML显示效果，支持打印和导出
-- 💻 **响应式设计**: 适配桌面和移动设备
+## 🌐 Live Demo
 
-## 🚀 快速开始
+> 🚀 **Try it now**: [http://esreport.tocharian.eu/esreport/](http://esreport.tocharian.eu/esreport/)  
+> Upload your Elasticsearch diagnostic files and experience the complete inspection report generation workflow
 
-### 环境要求
+## ✨ Features
+
+- 🌐 **Web Interface**: Modern drag-and-drop upload interface
+- 📁 **ZIP Support**: Automatic extraction and analysis of Elasticsearch diagnostic files  
+- 🔄 **Real-time Progress**: Dynamic progress bars showing processing status
+- 📊 **Smart Analysis**: Automatic analysis of cluster health, configuration, and performance
+- 📄 **Multiple Formats**: Support for Markdown and HTML report downloads
+- 🎨 **Beautiful Display**: Optimized HTML rendering with print and export support
+- 💻 **Responsive Design**: Compatible with desktop and mobile devices
+
+## 🚀 Quick Start
+
+### Requirements
 
 - Python 3.8+
-- uv (Python包管理器)
+- uv (Python package manager)
 
-### 安装依赖
+### Installation
 
 ```bash
-# 克隆项目
+# Clone the project
 git clone https://github.com/TocharianOU/ES-Reporter.git
-cd es_report_tool
+cd ES-Reporter
 
-# 安装依赖
+# Install dependencies
 uv sync
 ```
 
-### 运行应用
+### Running the Application
 
 ```bash
-# 启动Web服务
+# Start web service
 uv run python app.py
 
-# 或使用调试模式
+# Or with debug mode
 uv run python app.py --debug
 
-# 自定义端口
+# Custom port
 uv run python app.py --port 8080
 ```
 
-访问 http://localhost:5000 开始使用。
+Access http://localhost:5000 to get started.
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
-es_report_tool/
-├── app.py                 # Web应用主文件
+ES-Reporter/
+├── app.py                 # Main web application
 ├── src/
-│   ├── report_generator.py   # 报告生成核心
-│   ├── html_converter.py     # HTML转换器
-│   └── inspector.py          # ES数据检查器
+│   ├── report_generator.py   # Report generation core
+│   ├── html_converter.py     # HTML converter
+│   └── inspector.py          # ES data inspector
 ├── templates/
-│   └── index.html           # Web界面模板
-├── test_html_conversion.py  # HTML转换测试
-├── test_report_generation.py # 报告生成测试
-├── test_md_to_html.py       # Markdown转HTML测试
-└── pyproject.toml          # 项目配置
+│   └── index.html           # Web interface template
+├── test_html_conversion.py  # HTML conversion tests
+├── test_report_generation.py # Report generation tests
+├── test_md_to_html.py       # Markdown to HTML tests
+└── pyproject.toml          # Project configuration
 ```
 
-## 🔧 使用方法
+## 🔧 Usage
 
-### Web界面使用
+### Web Interface
 
-1. **上传文件**: 拖拽或选择ZIP格式的Elasticsearch诊断文件
-2. **等待处理**: 观察进度条，包含上传、解压、分析、生成报告等步骤
-3. **查看报告**: 在页面中预览生成的巡检报告
-4. **下载报告**: 选择Markdown或HTML格式下载
+1. **Upload Files**: Drag and drop or select ZIP format Elasticsearch diagnostic files
+2. **Wait for Processing**: Watch the progress bar through upload, extraction, analysis, and report generation
+3. **View Reports**: Preview the generated inspection report in the page
+4. **Download Reports**: Choose Markdown or HTML format for download
 
-### 命令行使用
+### Command Line
 
 ```bash
-# 生成报告（指定数据目录）
+# Generate report (specify data directory)
 uv run python -m src.report_generator /path/to/diagnostic/data
 
-# 测试HTML转换
+# Test HTML conversion
 uv run python test_html_conversion.py
 
-# 测试报告生成
+# Test report generation
 uv run python test_report_generation.py
 ```
 
-## 📊 报告内容
+## 📊 Report Contents
 
-巡检报告包含以下部分：
+Inspection reports include the following sections:
 
-- **📋 报告概览**: 执行摘要和关键指标
-- **🎯 执行摘要**: 总体健康状况和重要发现  
-- **⚙️ 集群基础信息**: 版本、配置、节点信息
-- **🖥️ 节点详情**: 每个节点的详细状态
-- **📚 索引分析**: 索引健康状况和性能指标
-- **💡 最终建议**: 优化建议和行动计划
-- **📝 日志分析**: 错误和警告日志摘要
+- **📋 Report Overview**: Executive summary and key metrics
+- **🎯 Executive Summary**: Overall health status and important findings  
+- **⚙️ Cluster Basic Info**: Version, configuration, and node information
+- **🖥️ Node Details**: Detailed status of each node
+- **📚 Index Analysis**: Index health and performance metrics
+- **💡 Final Recommendations**: Optimization suggestions and action plans
+- **📝 Log Analysis**: Error and warning log summaries
 
-## 🧪 测试
+## 🧪 Testing
 
 ```bash
-# 运行HTML转换测试
+# Run HTML conversion tests
 uv run python test_html_conversion.py
 
-# 运行完整功能测试
+# Run complete functionality tests
 uv run python test_report_generation.py
 
-# 运行Markdown到HTML转换测试
+# Run Markdown to HTML conversion tests
 uv run python test_md_to_html.py
 ```
 
-## 📋 依赖
+## 📋 Dependencies
 
-核心依赖：
-- Flask: Web框架
-- Jinja2: 模板引擎  
-- Werkzeug: WSGI工具库
-- jsonpath-ng: JSON数据查询
-- Markdown: Markdown处理
+Core dependencies:
+- Flask: Web framework
+- Jinja2: Template engine  
+- Werkzeug: WSGI toolkit
+- jsonpath-ng: JSON data querying
+- Markdown: Markdown processing
 
-开发依赖：
-- pytest: 测试框架
+Development dependencies:
+- pytest: Testing framework
 
-## 🎨 HTML报告特性
+## 🎨 HTML Report Features
 
-生成的HTML报告具有以下特性：
+Generated HTML reports have the following characteristics:
 
-- 📱 **响应式设计**: 适配各种屏幕尺寸
-- 🖨️ **打印优化**: 专门的打印样式，可直接打印或导出PDF
-- 📊 **表格美化**: 清晰的表格显示，支持条纹和悬停效果
-- 🎯 **导航友好**: 清晰的标题层级和内容结构
-- 💻 **Web友好**: 在浏览器中完美显示
+- 📱 **Responsive Design**: Adapts to various screen sizes
+- 🖨️ **Print Optimized**: Specialized print styles, can be directly printed or exported to PDF
+- 📊 **Beautiful Tables**: Clear table displays with stripe and hover effects
+- 🎯 **Navigation Friendly**: Clear heading hierarchy and content structure
+- 💻 **Web Friendly**: Perfect display in browsers
 
-## 🐳 Docker部署
+## 🐳 Docker Deployment
 
 ```bash
-# 构建镜像
+# Build image
 docker build -t es-report-tool .
 
-# 运行容器
+# Run container
 docker run -p 5000:5000 es-report-tool
 ```
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
-1. Fork项目
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建Pull Request
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Create a Pull Request
 
-## 📄 许可证
+## 📄 License
 
-MIT License - 详见 [LICENSE](LICENSE) 文件
+MIT License - see [LICENSE](LICENSE) file for details
 
-## 📞 支持
+## 📞 Support
 
-如有问题或建议，请创建Issue或联系维护者。
+For questions or suggestions, please create an Issue or contact the maintainers.
 
 ---
 
-**提示**: HTML报告可以在浏览器中直接打印为PDF，效果优于专用PDF生成器！🎯
+**Tip**: HTML reports can be directly printed to PDF in browsers, with better results than dedicated PDF generators! 🎯 
