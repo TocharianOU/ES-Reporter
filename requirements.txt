@@ -1,0 +1,32 @@
+# 核心库
+requests>=2.31.0
+urllib3>=2.0.0
+
+# PDF生成 - 纯Python方案
+reportlab>=4.0.0
+
+# Markdown处理
+markdown>=3.5.0
+
+# JSON处理
+jsonpath-ng>=1.6.0
+
+# 配置文件处理
+pyyaml>=6.0.1
+
+# 时间处理
+python-dateutil>=2.8.0
+
+# Web框架 (用于网页应用)
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# 模板引擎
+jinja2>=3.1.0
+
+# 静态文件服务
+whitenoise>=6.0.0
+
+# 开发工具
+pytest>=7.4.0
+pytest-cov>=4.1.0 

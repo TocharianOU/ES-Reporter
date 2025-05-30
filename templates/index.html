@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elasticsearch 巡检工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-light': 'bounce 2s infinite',
+                        'spin-slow': 'spin 3s linear infinite',
+                        'progress': 'progress 2s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        'progress': {
+                            '0%': { width: '0%' },
+                            '50%': { width: '75%' },
+                            '100%': { width: '100%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .drag-over {
+            border-color: #3b82f6 !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+        }
+        .report-content {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .report-content h1, .report-content h2, .report-content h3 {
+            color: #1f2937;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        .report-content h1 { 
+            font-size: 1.875rem; 
+            font-weight: 700;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 0.5rem;
+        }
+        .report-content h2 { 
+            font-size: 1.5rem; 
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.25rem;
+        }
+        .report-content h3 { 
+            font-size: 1.25rem; 
+            font-weight: 600;
+        }
+        .report-content table,
+        .report-content .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: white;
+        }
+        .report-content table th,
+        .report-content table td,
+        .report-content .table th,
+        .report-content .table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+        .report-content table th,
+        .report-content .table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+        .report-content .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f9fafb;
+        }
+        .report-content .table-bordered {
+            border: 1px solid #d1d5db;
+        }
+        .report-content ul, .report-content ol {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        .report-content li {
+            margin: 0.25rem 0;
+        }
+        .report-content strong {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .report-content code {
+            background-color: #f3f4f6;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+            font-size: 0.875em;
+        }
+        .report-content p {
+            margin: 0.75rem 0;
+            line-height: 1.6;
+        }
+        
+        /* 进度条动画 */
+        .progress-bar {
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-bar.uploading {
+            animation: progress-pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes progress-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 标题区域 -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl shadow-lg mb-4">
+                <i class="fas fa-search text-3xl text-white"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Elasticsearch 巡检工具</h1>
+            <p class="text-gray-600 text-lg">上传 Diagnostic 文件，生成详细巡检报告</p>
+        </div>
+
+        <!-- 文件上传区域 -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="glass-effect rounded-2xl p-8 shadow-xl">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-cloud-upload-alt text-blue-500 mr-3"></i>
+                    上传 Diagnostic 文件
+                </h2>
+                
+                <!-- 拖拽上传区域 -->
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:border-blue-400 transition-all duration-300 cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <div id="uploadContent">
+                        <i class="fas fa-file-archive text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-xl font-semibold text-gray-700 mb-2">拖拽文件到此处或点击上传</p>
+                        <p class="text-gray-500 mb-4">支持 .zip 格式的 Elasticsearch Diagnostic 文件</p>
+                        <button id="selectFileBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                            选择文件
+                        </button>
+                    </div>
+                    <input type="file" id="fileInput" accept=".zip" style="display: none;">
+                </div>
+
+                <!-- 文件信息 -->
+                <div id="fileInfo" class="mt-6 hidden">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <div>
+                                <p class="font-medium text-green-800">文件已选择</p>
+                                <p id="fileName" class="text-sm text-green-600"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 生成报告按钮 -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="text-center">
+                <button id="generateReportBtn" disabled class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-300 disabled:to-gray-400 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg disabled:cursor-not-allowed disabled:shadow-none">
+                    <i class="fas fa-magic mr-2"></i>
+                    生成巡检报告
+                </button>
+            </div>
+        </div>
+
+        <!-- 处理状态和进度条 -->
+        <div id="processingStatus" class="max-w-4xl mx-auto mb-8 hidden">
+            <div class="glass-effect rounded-2xl p-6 shadow-xl">
+                <div class="flex items-center justify-center mb-4">
+                    <div id="statusIcon" class="animate-spin-slow mr-4">
+                        <i class="fas fa-upload text-3xl text-blue-500"></i>
+                    </div>
+                    <div>
+                        <p id="statusTitle" class="text-lg font-semibold text-gray-800">准备上传...</p>
+                        <p id="statusDesc" class="text-gray-600">正在初始化上传</p>
+                    </div>
+                </div>
+                
+                <!-- 进度条 -->
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+                    <div id="progressBar" class="progress-bar bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full"></div>
+                </div>
+                
+                <!-- 进度文字 -->
+                <p id="progressText" class="text-center text-sm text-gray-600">0% 完成</p>
+            </div>
+        </div>
+
+        <!-- 错误提示 -->
+        <div id="errorAlert" class="max-w-4xl mx-auto mb-8 hidden">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
+                    <div>
+                        <p class="font-medium text-red-800">错误</p>
+                        <p id="errorMessage" class="text-sm text-red-600"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 报告显示区域 -->
+        <div id="reportSection" class="max-w-6xl mx-auto hidden">
+            <div class="glass-effect rounded-2xl p-8 shadow-xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-file-alt text-green-500 mr-3"></i>
+                        巡检报告
+                    </h2>
+                    <div class="flex space-x-3">
+                        <button id="downloadMarkdownBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-download mr-2"></i>
+                            下载 Markdown
+                        </button>
+                        <button id="downloadHtmlBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-code mr-2"></i>
+                            下载 HTML
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="reportContent" class="report-content bg-white rounded-lg p-6 border"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let uploadedFile = null;
+        let reportData = null;
+        
+        // DOM 元素
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const processingStatus = document.getElementById('processingStatus');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusDesc = document.getElementById('statusDesc');
+        const errorAlert = document.getElementById('errorAlert');
+        const errorMessage = document.getElementById('errorMessage');
+        const reportSection = document.getElementById('reportSection');
+        const reportContent = document.getElementById('reportContent');
+        const downloadMarkdownBtn = document.getElementById('downloadMarkdownBtn');
+        const downloadHtmlBtn = document.getElementById('downloadHtmlBtn');
+
+        // 事件监听器
+        selectFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.name.toLowerCase().endsWith('.zip')) {
+                showError('请选择 .zip 格式的文件');
+                return;
+            }
+
+            uploadedFile = file;
+            fileName.textContent = `${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.classList.remove('hidden');
+            generateReportBtn.disabled = false;
+            hideError();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // 状态更新函数
+        function updateStatus(icon, title, desc, progress = 0) {
+            statusIcon.innerHTML = `<i class="${icon} text-3xl text-blue-500"></i>`;
+            statusTitle.textContent = title;
+            statusDesc.textContent = desc;
+            progressBar.style.width = progress + '%';
+            progressText.textContent = progress + '% 完成';
+        }
+
+        // 生成报告
+        generateReportBtn.addEventListener('click', async () => {
+            if (!uploadedFile) return;
+
+            hideError();
+            reportSection.classList.add('hidden');
+            processingStatus.classList.remove('hidden');
+
+            // 状态：开始上传
+            updateStatus('fas fa-upload animate-bounce', '正在上传文件...', '文件上传中，请稍候', 10);
+            progressBar.classList.add('uploading');
+
+            const formData = new FormData();
+            formData.append('diagnostic_file', uploadedFile);
+
+            try {
+                // 模拟上传进度
+                setTimeout(() => {
+                    updateStatus('fas fa-archive animate-spin', '正在解压文件...', '解压诊断文件并验证格式', 30);
+                }, 500);
+
+                setTimeout(() => {
+                    updateStatus('fas fa-search animate-spin-slow', '正在分析数据...', '分析集群状态和配置信息', 50);
+                }, 1500);
+
+                setTimeout(() => {
+                    updateStatus('fas fa-chart-line animate-pulse', '正在生成报告...', '生成详细的巡检报告', 80);
+                }, 3000);
+
+                const response = await fetch('/api/upload-diagnostic', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    updateStatus('fas fa-check-circle', '处理完成！', '报告生成成功', 100);
+                    progressBar.classList.remove('uploading');
+                    
+                    setTimeout(() => {
+                        reportData = result;
+                        displayReport(result.report_content, result.html_content);
+                        processingStatus.classList.add('hidden');
+                    }, 1000);
+                } else {
+                    showError(result.message || '报告生成失败');
+                    processingStatus.classList.add('hidden');
+                }
+            } catch (error) {
+                showError('网络错误：' + error.message);
+                processingStatus.classList.add('hidden');
+            }
+        });
+
+        function displayReport(content, htmlContent) {
+            // 如果有HTML内容，直接使用
+            if (htmlContent) {
+                reportContent.innerHTML = htmlContent;
+            } else {
+                // 转换 Markdown 为 HTML（简单版本，作为备用）
+                const htmlContentFallback = markdownToHtml(content);
+                reportContent.innerHTML = htmlContentFallback;
+            }
+            reportSection.classList.remove('hidden');
+        }
+
+        function markdownToHtml(markdown) {
+            let html = markdown;
+            
+            // 标题
+            html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+            
+            // 粗体
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // 列表项
+            html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
+            
+            // 包装连续的列表项
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`);
+            
+            // 表格（简化处理）
+            const lines = html.split('\n');
+            let inTable = false;
+            let tableBuffer = [];
+            let result = [];
+            
+            for (let line of lines) {
+                if (line.includes('|') && line.trim().startsWith('|')) {
+                    if (!inTable) {
+                        inTable = true;
+                        tableBuffer = [];
+                    }
+                    tableBuffer.push(line);
+                } else {
+                    if (inTable) {
+                        // 处理表格
+                        if (tableBuffer.length > 2) {
+                            const header = tableBuffer[0].split('|').filter(cell => cell.trim()).map(cell => `<th>${cell.trim()}</th>`).join('');
+                            const rows = tableBuffer.slice(2).map(row => {
+                                const cells = row.split('|').filter(cell => cell.trim()).map(cell => `<td>${cell.trim()}</td>`).join('');
+                                return `<tr>${cells}</tr>`;
+                            }).join('');
+                            result.push(`<table><thead><tr>${header}</tr></thead><tbody>${rows}</tbody></table>`);
+                        }
+                        inTable = false;
+                        tableBuffer = [];
+                    }
+                    result.push(line);
+                }
+            }
+            
+            // 处理最后的表格
+            if (inTable && tableBuffer.length > 2) {
+                const header = tableBuffer[0].split('|').filter(cell => cell.trim()).map(cell => `<th>${cell.trim()}</th>`).join('');
+                const rows = tableBuffer.slice(2).map(row => {
+                    const cells = row.split('|').filter(cell => cell.trim()).map(cell => `<td>${cell.trim()}</td>`).join('');
+                    return `<tr>${cells}</tr>`;
+                }).join('');
+                result.push(`<table><thead><tr>${header}</tr></thead><tbody>${rows}</tbody></table>`);
+            }
+            
+            html = result.join('\n');
+            
+            // 换行
+            html = html.replace(/\n/g, '<br>');
+            
+            return html;
+        }
+
+        // 下载功能
+        downloadMarkdownBtn.addEventListener('click', async () => {
+            if (!reportData || !reportData.report_id) return;
+
+            try {
+                const response = await fetch(`/api/download-markdown/${reportData.report_id}`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // 从响应头获取文件名，如果没有则使用默认名称
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'elasticsearch_report.md';
+                    if (contentDisposition) {
+                        const matches = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+                    
+                    a.download = filename;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    showError('Markdown 下载失败');
+                }
+            } catch (error) {
+                showError('Markdown 下载错误：' + error.message);
+            }
+        });
+
+        downloadHtmlBtn.addEventListener('click', async () => {
+            if (!reportData || !reportData.report_id) return;
+
+            try {
+                const response = await fetch(`/api/download-html/${reportData.report_id}`);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // 从响应头获取文件名，如果没有则使用默认名称
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'elasticsearch_report.html';
+                    if (contentDisposition) {
+                        const matches = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+                    
+                    a.download = filename;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    showError('HTML 下载失败');
+                }
+            } catch (error) {
+                showError('HTML 下载错误：' + error.message);
+            }
+        });
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorAlert.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorAlert.classList.add('hidden');
+        }
+    </script>
+</body>
+</html> 

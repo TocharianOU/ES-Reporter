@@ -1,0 +1,145 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "es-report-tool"
+version = "1.0.0"
+description = "专业的ES集群健康检查和报告生成工具 - 纯Python实现，跨平台Web应用"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8.1"
+authors = [
+    { name = "ES Report Tool Team" },
+]
+keywords = ["elasticsearch", "monitoring", "report", "pdf", "web-app"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Monitoring",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+]
+
+dependencies = [
+    # 核心库
+    "requests>=2.31.0",
+    "urllib3>=2.0.0",
+    # PDF生成 - 纯Python方案
+    "reportlab>=4.0.0",
+    # Markdown处理
+    "markdown>=3.5.0",
+    # JSON处理
+    "jsonpath-ng>=1.6.0",
+    # 配置文件处理
+    "pyyaml>=6.0.1",
+    # 时间处理
+    "python-dateutil>=2.8.0",
+    # Web框架
+    "flask>=3.0.0",
+    "flask-cors>=4.0.0",
+    # 模板引擎
+    "jinja2>=3.1.0",
+    # 静态文件服务
+    "whitenoise>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "flake8>=5.0.0; python_version < '3.8.1'",
+    "flake8>=6.0.0; python_version >= '3.8.1'",
+    "isort>=5.12.0",
+]
+
+production = [
+    "gunicorn>=21.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/es-report-tool"
+Repository = "https://github.com/your-org/es-report-tool.git"
+Issues = "https://github.com/your-org/es-report-tool/issues"
+Documentation = "https://github.com/your-org/es-report-tool/wiki"
+
+[project.scripts]
+es-report = "src.main:main"
+es-report-web = "run_web:main"
+
+# Hatchling配置 - 指定要包含的包
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = "src"
+"templates" = "templates"
+"app.py" = "app.py"
+"run_web.py" = "run_web.py"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# 测试输出
+html_test_output/
+output/
+temp_uploads/
+
+# 临时文件
+*.tmp
+*.temp
+.DS_Store
+
+# IDE文件
+.vscode/
+.idea/
+
+# 日志文件
+*.log
+
+# 诊断数据（示例）
+local-diagnostics-*/
