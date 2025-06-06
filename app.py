@@ -23,9 +23,14 @@ current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
 # 导入本地模块
+from src.env_loader import load_env_file
 from src.report_generator import ESReportGenerator
 from src.html_converter import markdown_to_html, create_html_template
 from src.i18n import detect_browser_language, i18n
+from src.s3_uploader import S3Uploader
+
+# 加载.env文件
+load_env_file()
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB 最大文件大小
@@ -33,6 +38,9 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB 最大文件大小
 # 全局变量存储任务状态
 tasks = {}
 reports = {}
+
+# 初始化S3上传器
+s3_uploader = S3Uploader()
 
 # 在所有路由前添加调试信息
 @app.before_request
@@ -220,6 +228,32 @@ def upload_diagnostic():
             zip_path = os.path.join(temp_dir, filename)
             file.save(zip_path)
             
+            print(f"📁 开始分析诊断文件: {filename}")
+            
+            # **在开始分析时立即上传ZIP文件到S3**
+            s3_upload_result = None
+            folder_name = None
+            if s3_uploader.is_configured():
+                print("📤 开始上传ZIP文件到S3...")
+                # 创建基于文件哈希的文件夹
+                folder_name = s3_uploader.create_folder_with_file_hash(zip_path)
+                zip_s3_key = f"{folder_name}/{filename}"
+                
+                metadata = {
+                    'upload-time': datetime.now().isoformat(),
+                    'original-filename': filename,
+                    'folder': folder_name,
+                    'status': 'analyzing'  # 标记为分析中
+                }
+                
+                zip_uploaded = s3_uploader.upload_file(zip_path, zip_s3_key, metadata)
+                if zip_uploaded:
+                    print(f"✅ ZIP文件已上传到S3: s3://{s3_uploader.bucket_name}/{zip_s3_key}")
+                else:
+                    print("❌ ZIP文件上传到S3失败")
+            else:
+                print("⚠️ S3未配置，跳过上传")
+            
             # 解压文件
             print(f"📁 解压诊断文件: {filename}")
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -248,6 +282,61 @@ def upload_diagnostic():
             # 转换为HTML
             html_content = markdown_to_html(markdown_content)
             
+            # **报告生成完成后，上传报告文件到S3**
+            html_path = report_result.get('html')
+            if s3_uploader.is_configured():
+                print("📤 开始上传报告文件到S3...")
+                
+                # 如果之前没有创建文件夹，现在创建 
+                if folder_name is None:
+                    folder_name = s3_uploader.create_folder_with_file_hash(zip_path)
+                
+                # 上传Markdown报告
+                if markdown_path and os.path.exists(markdown_path):
+                    md_filename = os.path.basename(markdown_path)
+                    md_s3_key = f"{folder_name}/{md_filename}"
+                    
+                    metadata = {
+                        'upload-time': datetime.now().isoformat(),
+                        'original-filename': filename,
+                        'folder': folder_name,
+                        'status': 'completed',
+                        'file-type': 'markdown-report'
+                    }
+                    
+                    md_uploaded = s3_uploader.upload_file(markdown_path, md_s3_key, metadata)
+                    if md_uploaded:
+                        print(f"✅ Markdown报告已上传到S3: s3://{s3_uploader.bucket_name}/{md_s3_key}")
+                    else:
+                        print("❌ Markdown报告上传到S3失败")
+                
+                # 上传HTML报告
+                if html_path and os.path.exists(html_path):
+                    html_filename = os.path.basename(html_path)
+                    html_s3_key = f"{folder_name}/{html_filename}"
+                    
+                    metadata = {
+                        'upload-time': datetime.now().isoformat(),
+                        'original-filename': filename,
+                        'folder': folder_name,
+                        'status': 'completed',
+                        'file-type': 'html-report'
+                    }
+                    
+                    html_uploaded = s3_uploader.upload_file(html_path, html_s3_key, metadata)
+                    if html_uploaded:
+                        print(f"✅ HTML报告已上传到S3: s3://{s3_uploader.bucket_name}/{html_s3_key}")
+                    else:
+                        print("❌ HTML报告上传到S3失败")
+                
+                # 准备S3上传结果信息
+                s3_upload_result = {
+                    'enabled': True,
+                    'bucket': s3_uploader.bucket_name,
+                    'folder': folder_name,
+                    'upload_time': datetime.now().isoformat()
+                }
+            
             # 生成唯一报告ID
             report_id = str(uuid.uuid4())
             
@@ -256,22 +345,29 @@ def upload_diagnostic():
                 'markdown_content': markdown_content,
                 'html_content': html_content,
                 'markdown_path': markdown_path,
-                'html_path': report_result.get('html'),
+                'html_path': html_path,
                 'generated_at': datetime.now().isoformat(),
                 'filename': filename,
-                'language': language  # 保存语言信息
+                'language': language,  # 保存语言信息
+                's3_upload': s3_upload_result  # 保存S3上传信息
             }
             
             print(f"✅ 报告生成完成: {report_id}")
             
-            return jsonify({
+            response_data = {
                 'success': True,
                 'report_id': report_id,
                 'report_content': markdown_content,
                 'html_content': html_content,
                 'generated_at': datetime.now().isoformat(),
                 'language': language
-            })
+            }
+            
+            # 如果有S3上传结果，包含在响应中
+            if s3_upload_result:
+                response_data['s3_upload'] = s3_upload_result
+            
+            return jsonify(response_data)
             
         except zipfile.BadZipFile:
             return jsonify({'success': False, 'message': i18n.t('error_invalid_zip', 'ui')})
@@ -401,6 +497,13 @@ def download_markdown(report_id):
     except Exception as e:
         return jsonify({'error': f'Markdown下载失败: {str(e)}'}), 500
 
+# 添加S3测试接口
+@app.route('/api/s3-test')
+def test_s3_connection():
+    """测试S3连接"""
+    result = s3_uploader.test_connection()
+    return jsonify(result)
+
 @app.route('/api/reports')
 def list_reports():
     """列出所有报告"""
@@ -427,21 +530,9 @@ def get_translations():
     # 设置语言
     i18n.set_language(lang)
     
-    # 返回UI相关的翻译
-    translations = {
-        'title': i18n.t('title', 'ui'),
-        'upload_area_title': i18n.t('upload_area_title', 'ui'),
-        'upload_area_desc': i18n.t('upload_area_desc', 'ui'),
-        'select_file': i18n.t('select_file', 'ui'),
-        'generating_report': i18n.t('generating_report', 'ui'),
-        'report_generated': i18n.t('report_generated', 'ui'),
-        'download_html': i18n.t('download_html', 'ui'),
-        'download_markdown': i18n.t('download_markdown', 'ui'),
-        'view_reports': i18n.t('view_reports', 'ui'),
-        'processing': i18n.t('processing', 'ui'),
-        'upload_success': i18n.t('upload_success', 'ui'),
-        'language': lang
-    }
+    # 返回所有UI相关的翻译
+    translations = i18n.get_translations('ui')
+    translations['language'] = lang
     
     return jsonify(translations)
 
@@ -477,6 +568,30 @@ def not_found(e):
 def server_error(e):
     """500错误处理"""
     return jsonify({'error': '服务器内部错误'}), 500
+
+@app.route('/diagnostic-guide')
+def diagnostic_guide():
+    """Diagnostic 获取指南页面 - 支持语言检测"""
+    # 检测浏览器语言
+    accept_language = request.headers.get('Accept-Language', '')
+    detected_lang = detect_browser_language(accept_language)
+    
+    # 设置语言
+    i18n.set_language(detected_lang)
+    
+    return render_template('diagnostic_guide.html', language=detected_lang)
+
+@app.route('/terms-of-use')
+def terms_of_use():
+    """使用条款页面 - 支持语言检测"""
+    # 检测浏览器语言
+    accept_language = request.headers.get('Accept-Language', '')
+    detected_lang = detect_browser_language(accept_language)
+    
+    # 设置语言
+    i18n.set_language(detected_lang)
+    
+    return render_template('terms_of_use.html', language=detected_lang)
 
 if __name__ == '__main__':
     import argparse

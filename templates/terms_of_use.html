@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">使用条款 - Elasticsearch 巡检工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 语言选择器样式 */
+        .language-selector {
+            position: relative;
+        }
+        
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            min-width: 120px;
+        }
+        
+        .language-option {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .language-option:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .language-option.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .terms-content {
+            line-height: 1.7;
+        }
+
+        .terms-content h2 {
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+        }
+
+        .terms-content h2:first-of-type {
+            margin-top: 0;
+        }
+
+        .terms-content ul {
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .terms-content li {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 头部导航区域 -->
+        <div class="flex justify-between items-start mb-6">
+            <!-- 返回按钮 -->
+            <div class="max-w-4xl">
+                <a href="/" class="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    <span data-i18n="back_to_home">返回主页</span>
+                </a>
+            </div>
+            
+            <!-- 语言选择器 -->
+            <div class="language-selector">
+                <button id="languageToggle" class="flex items-center space-x-2 bg-white/50 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-2 text-gray-700 hover:bg-white/70 transition-all">
+                    <i class="fas fa-globe"></i>
+                    <span id="currentLanguage">中文</span>
+                    <i class="fas fa-chevron-down text-xs"></i>
+                </button>
+                
+                <div id="languageDropdown" class="language-dropdown hidden">
+                    <div class="language-option" data-lang="zh">
+                        <i class="fas fa-check text-blue-500 mr-2 opacity-0" id="zh-check"></i>
+                        中文
+                    </div>
+                    <div class="language-option" data-lang="en">
+                        <i class="fas fa-check text-blue-500 mr-2 opacity-0" id="en-check"></i>
+                        English
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 标题区域 -->
+        <div class="max-w-4xl mx-auto text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl shadow-lg mb-4">
+                <i class="fas fa-file-contract text-3xl text-white"></i>
+            </div>
+            <h1 id="main-title" class="text-4xl font-bold text-gray-800 mb-2" data-i18n="terms_title">Elasticsearch 巡检工具 - 使用条款</h1>
+            <p class="text-gray-600 text-lg">
+                <span data-i18n="last_updated">最后更新</span>: 
+                <span id="last-updated-date">2024年12月</span>
+            </p>
+        </div>
+
+        <!-- 使用条款内容 -->
+        <div class="max-w-4xl mx-auto">
+            <div class="glass-effect rounded-2xl p-8 shadow-xl bg-white/70">
+                <div class="terms-content">
+                    <!-- 条款接受 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-handshake text-green-500 mr-3"></i>
+                        <span data-i18n="acceptance_title">条款接受</span>
+                    </h2>
+                    <p class="text-gray-700" data-i18n="acceptance_content">
+                        通过使用本服务，您同意遵守以下使用条款。如果您不同意这些条款，请停止使用本服务。
+                    </p>
+
+                    <!-- 服务描述 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-cogs text-blue-500 mr-3"></i>
+                        <span data-i18n="service_description_title">服务描述</span>
+                    </h2>
+                    <p class="text-gray-700" data-i18n="service_description_content">
+                        本工具用于分析 Elasticsearch 诊断文件并生成巡检报告。我们提供文件上传、分析和报告生成服务。
+                    </p>
+
+                    <!-- 数据处理与隐私 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-shield-alt text-purple-500 mr-3"></i>
+                        <span data-i18n="data_processing_title">数据处理与隐私</span>
+                    </h2>
+                    <p class="text-gray-700 mb-4" data-i18n="data_processing_content">
+                        我们遵守欧盟通用数据保护条例(GDPR)的要求：
+                    </p>
+                    <ul class="text-gray-700 space-y-2">
+                        <li data-i18n="data_processing_item1">• 上传的诊断文件仅用于生成报告</li>
+                        <li data-i18n="data_processing_item2">• 我们不收集个人身份信息</li>
+                        <li data-i18n="data_processing_item3">• 所有数据传输均经过加密保护</li>
+                        <li data-i18n="data_processing_item4">• 我们可能保存匿名化的技术数据用于改进服务</li>
+                    </ul>
+
+                    <!-- 数据管理 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-database text-orange-500 mr-3"></i>
+                        <span data-i18n="data_retention_title">数据管理</span>
+                    </h2>
+                    <p class="text-gray-700" data-i18n="data_management_content">
+                        为提高服务质量，我们可能保留匿名化的技术数据。
+                    </p>
+
+                    <!-- 您的权利 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-user-shield text-indigo-500 mr-3"></i>
+                        <span data-i18n="user_rights_title">您的权利</span>
+                    </h2>
+                    <p class="text-gray-700 mb-4" data-i18n="user_rights_content">
+                        您享有以下数据权利：
+                    </p>
+                    <ul class="text-gray-700 space-y-2">
+                        <li data-i18n="user_right1">• 了解我们如何处理您的数据</li>
+                        <li data-i18n="user_right2">• 要求删除您的数据</li>
+                        <li data-i18n="user_right3">• 选择退出数据收集</li>
+                    </ul>
+
+                    <!-- Cookies和跟踪 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-cookie-bite text-amber-500 mr-3"></i>
+                        <span data-i18n="cookies_title">Cookies和跟踪</span>
+                    </h2>
+                    <p class="text-gray-700" data-i18n="cookies_content">
+                        本网站使用必要的cookies来维持会话状态和语言偏好。我们不使用跟踪cookies或第三方分析服务。
+                    </p>
+
+                    <!-- 服务可用性 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-server text-green-500 mr-3"></i>
+                        <span data-i18n="service_availability_title">服务可用性</span>
+                    </h2>
+                    <p class="text-gray-700" data-i18n="service_availability_content">
+                        我们努力保持服务的持续可用性，但不保证100%的正常运行时间。服务可能因维护或技术问题而暂时中断。
+                    </p>
+
+                    <!-- 责任限制 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                        <span data-i18n="liability_title">责任限制</span>
+                    </h2>
+                    <p class="text-gray-700" data-i18n="liability_content">
+                        本服务按"现状"提供，我们对服务的准确性、完整性或可靠性不承担责任。使用本服务的风险由您自行承担。
+                    </p>
+
+                    <!-- 条款变更 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-edit text-blue-500 mr-3"></i>
+                        <span data-i18n="changes_title">条款变更</span>
+                    </h2>
+                    <p class="text-gray-700" data-i18n="changes_content">
+                        我们保留随时修改这些条款的权利。重大变更将通过网站通知的形式提前告知用户。
+                    </p>
+
+                    <!-- 开发者信息 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-code text-purple-500 mr-3"></i>
+                        <span data-i18n="developer_title">开发者</span>
+                    </h2>
+                    <p class="text-gray-700" data-i18n="developer_content">
+                        本工具由 [开发者名称] 开发和维护。
+                    </p>
+
+                    <!-- 联系我们 -->
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-envelope text-indigo-500 mr-3"></i>
+                        <span data-i18n="contact_title">联系我们</span>
+                    </h2>
+                    <div class="text-gray-700 space-y-2">
+                        <p data-i18n="contact_content">
+                            如果您对这些条款或数据处理有任何疑问，请联系我们：
+                        </p>
+                        <p>
+                            <span data-i18n="contact_email">邮箱</span>: 
+                            <a id="contact-email-link" href="mailto:luke@newmindtech.cn" class="text-blue-600 hover:text-blue-800" data-i18n="contact_email_address">luke@newmindtech.cn</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 返回主页按钮 -->
+        <div class="max-w-4xl mx-auto mt-8 text-center">
+            <a href="/" class="inline-flex items-center bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 shadow-lg hover:shadow-xl">
+                <i class="fas fa-home mr-3"></i>
+                <span data-i18n="back_to_home">返回主页</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // 多语言支持
+        let currentLanguage = '{{ language }}' || 'zh';
+        let translations = {};
+
+        // 加载翻译
+        async function loadTranslations() {
+            try {
+                const response = await fetch(`/api/translations?lang=${currentLanguage}`);
+                translations = await response.json();
+                updateLanguageDisplay();
+                updatePageContent();
+            } catch (error) {
+                console.error('Failed to load translations:', error);
+            }
+        }
+
+        // 更新页面内容
+        function updatePageContent() {
+            // 更新所有带有 data-i18n 属性的元素
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (translations[key]) {
+                    element.textContent = translations[key];
+                }
+            });
+
+            // 特殊处理邮箱链接
+            const emailLink = document.getElementById('contact-email-link');
+            if (emailLink && translations['contact_email_address']) {
+                emailLink.href = `mailto:${translations['contact_email_address']}`;
+            }
+
+            // 更新页面标题
+            if (translations.terms_title) {
+                document.getElementById('page-title').textContent = translations.terms_title;
+            }
+
+            // 更新最后更新日期文本
+            const lastUpdatedDate = document.getElementById('last-updated-date');
+            if (currentLanguage === 'en') {
+                lastUpdatedDate.textContent = 'June 2025';
+            } else {
+                lastUpdatedDate.textContent = '2025年6月';
+            }
+
+            // 更新 HTML lang 属性
+            document.getElementById('html-root').setAttribute('lang', currentLanguage === 'en' ? 'en' : 'zh-CN');
+        }
+
+        // 更新语言显示
+        function updateLanguageDisplay() {
+            const currentLangElement = document.getElementById('currentLanguage');
+            if (currentLanguage === 'en') {
+                currentLangElement.textContent = 'English';
+            } else {
+                currentLangElement.textContent = '中文';
+            }
+
+            // 更新选中状态
+            document.getElementById('zh-check').style.opacity = currentLanguage === 'zh' ? '1' : '0';
+            document.getElementById('en-check').style.opacity = currentLanguage === 'en' ? '1' : '0';
+        }
+
+        // 切换语言
+        async function switchLanguage(lang) {
+            if (lang === currentLanguage) return;
+
+            currentLanguage = lang;
+            
+            try {
+                // 发送语言切换请求到服务器
+                await fetch('/api/set-language', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ language: lang })
+                });
+
+                // 重新加载翻译
+                await loadTranslations();
+            } catch (error) {
+                console.error('Failed to switch language:', error);
+            }
+        }
+
+        // 语言选择器事件处理
+        document.addEventListener('DOMContentLoaded', function() {
+            const languageToggle = document.getElementById('languageToggle');
+            const languageDropdown = document.getElementById('languageDropdown');
+
+            // 点击语言切换按钮
+            languageToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                languageDropdown.classList.toggle('hidden');
+            });
+
+            // 点击语言选项
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const lang = this.getAttribute('data-lang');
+                    switchLanguage(lang);
+                    languageDropdown.classList.add('hidden');
+                });
+            });
+
+            // 点击其他地方关闭下拉菜单
+            document.addEventListener('click', function() {
+                languageDropdown.classList.add('hidden');
+            });
+
+            // 阻止下拉菜单内部点击事件冒泡
+            languageDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // 初始化翻译
+            loadTranslations();
+        });
+    </script>
+</body>
+</html> 

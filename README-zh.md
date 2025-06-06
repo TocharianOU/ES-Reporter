@@ -18,6 +18,7 @@
 - 📄 **多格式报告**: 支持Markdown和HTML格式下载
 - 🎨 **美观展示**: 优化的HTML显示效果，支持打印和导出
 - 💻 **响应式设计**: 适配桌面和移动设备
+- ☁️ **S3存储**: 自动上传文件到AWS S3，使用Unix时间戳文件夹
 
 ## 🚀 快速开始
 
@@ -60,12 +61,14 @@ es_report_tool/
 ├── src/
 │   ├── report_generator.py   # 报告生成核心
 │   ├── html_converter.py     # HTML转换器
+│   ├── s3_uploader.py        # S3上传功能
 │   └── inspector.py          # ES数据检查器
 ├── templates/
 │   └── index.html           # Web界面模板
 ├── test_html_conversion.py  # HTML转换测试
 ├── test_report_generation.py # 报告生成测试
 ├── test_md_to_html.py       # Markdown转HTML测试
+├── S3_CONFIG.md            # S3配置指南
 └── pyproject.toml          # 项目配置
 ```
 
@@ -74,9 +77,11 @@ es_report_tool/
 ### Web界面使用
 
 1. **上传文件**: 拖拽或选择ZIP格式的Elasticsearch诊断文件
-2. **等待处理**: 观察进度条，包含上传、解压、分析、生成报告等步骤
-3. **查看报告**: 在页面中预览生成的巡检报告
-4. **下载报告**: 选择Markdown或HTML格式下载
+2. **自动备份**: 开始分析时立即将ZIP文件上传到S3（如已配置）
+3. **等待处理**: 观察进度条，包含上传、解压、分析、生成报告等步骤
+4. **查看报告**: 在页面中预览生成的巡检报告
+5. **下载报告**: 选择Markdown或HTML格式下载
+6. **S3存储**: 报告生成完成后自动上传到S3对应文件夹
 
 ### 命令行使用
 
@@ -124,6 +129,7 @@ uv run python test_md_to_html.py
 - Werkzeug: WSGI工具库
 - jsonpath-ng: JSON数据查询
 - Markdown: Markdown处理
+- boto3: AWS S3上传功能
 
 开发依赖：
 - pytest: 测试框架
@@ -144,11 +150,42 @@ uv run python test_md_to_html.py
 # 构建镜像
 docker build -t es-report-tool .
 
-# 运行容器
+# 运行容器（不含S3）
 docker run -p 5000:5000 es-report-tool
+
+# 运行容器（含S3配置）
+docker run -p 5000:5000 \
+  -e AWS_S3_BUCKET_NAME=your-bucket-name \
+  -e AWS_ACCESS_KEY_ID=your-access-key \
+  -e AWS_SECRET_ACCESS_KEY=your-secret-key \
+  -e AWS_REGION=us-east-1 \
+  es-report-tool
 
 # 后台运行容器
 docker run -d -p 5000:5000 --name es-report-server es-report-tool
+```
+
+## ☁️ S3存储配置
+
+详细的S3配置说明请参考 [S3_CONFIG.md](S3_CONFIG.md) 文档，包括：
+
+- 🔧 **配置方法**: 环境变量、.env文件、IAM角色等多种方式
+- 🔑 **权限设置**: IAM策略配置和安全建议
+- 🧪 **连接测试**: 内置测试接口验证配置
+- 📁 **存储结构**: Unix时间戳文件夹组织方式
+- 🔧 **故障排除**: 常见问题解决方案
+
+快速配置示例：
+
+```bash
+# 设置环境变量
+export AWS_S3_BUCKET_NAME=your-elasticsearch-reports-bucket
+export AWS_ACCESS_KEY_ID=your-access-key-id
+export AWS_SECRET_ACCESS_KEY=your-secret-access-key
+export AWS_REGION=us-east-1
+
+# 测试S3连接
+curl http://localhost:5000/api/s3-test
 ```
 
 ## 🤝 贡献指南

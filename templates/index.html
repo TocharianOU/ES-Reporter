@@ -197,6 +197,27 @@
             <p id="main-subtitle" class="text-gray-600 text-lg">上传 Diagnostic 文件，生成详细巡检报告</p>
         </div>
 
+        <!-- 获取 Diagnostic 包模块 -->
+        <div class="max-w-4xl mx-auto mb-8">
+            <div class="glass-effect rounded-2xl p-6 shadow-xl bg-gradient-to-r from-orange-50 to-amber-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-orange-400 to-amber-500 rounded-xl shadow-lg mr-4">
+                            <i class="fas fa-download text-xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 id="get-diagnostic-title" class="text-lg font-semibold text-gray-800">获取 Diagnostic 包</h3>
+                            <p id="get-diagnostic-desc" class="text-sm text-gray-600">了解如何生成 Elasticsearch 诊断文件</p>
+                        </div>
+                    </div>
+                    <button id="getDiagnosticBtn" class="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        <span id="get-diagnostic-btn-text">获取方法</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- 文件上传区域 -->
         <div class="max-w-4xl mx-auto mb-8">
             <div class="glass-effect rounded-2xl p-8 shadow-xl">
@@ -302,6 +323,30 @@
                 <div id="reportContent" class="report-content bg-white rounded-lg p-6 border"></div>
             </div>
         </div>
+
+        <!-- Footer 区域 -->
+        <footer class="max-w-4xl mx-auto mt-16 mb-8">
+            <div class="glass-effect rounded-2xl p-6 shadow-lg bg-white/50">
+                <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                    <!-- 左侧链接 -->
+                    <div class="flex space-x-6 text-sm">
+                        <a href="/terms-of-use" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                            <i class="fas fa-file-contract mr-2"></i>
+                            <span data-i18n="terms_of_use">使用条款</span>
+                        </a>
+                        <a href="/diagnostic-guide" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                            <i class="fas fa-question-circle mr-2"></i>
+                            <span data-i18n="get_diagnostic_btn">获取方法</span>
+                        </a>
+                    </div>
+                    
+                    <!-- 右侧版权信息 -->
+                    <div class="text-sm text-gray-500 text-center md:text-right">
+                        <p data-i18n="copyright">© 2024 Elasticsearch 巡检工具</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script>
@@ -317,89 +362,8 @@
         const API_BASE = getBasePath();
         console.log('检测到基础路径:', API_BASE);
 
-        // 国际化配置
-        const TRANSLATIONS = {
-            'zh': {
-                'title': 'Elasticsearch 巡检工具',
-                'subtitle': '上传 Diagnostic 文件，生成详细巡检报告',
-                'upload_title': '上传 Diagnostic 文件',
-                'drag_drop_text': '拖拽文件到此处或点击上传',
-                'file_format_text': '支持 .zip 格式的 Elasticsearch Diagnostic 文件',
-                'select_file_btn': '选择文件',
-                'file_selected': '文件已选择',
-                'generate_report_btn': '生成巡检报告',
-                'download_markdown': '下载 Markdown',
-                'download_html': '下载 HTML',
-                'report_title': '巡检报告',
-                'language_selector': '语言',
-                'chinese': '中文',
-                'english': 'English',
-                
-                // 状态提示
-                'status_uploading': '正在上传文件...',
-                'status_uploading_desc': '文件上传中，请稍候',
-                'status_extracting': '正在解压文件...',
-                'status_extracting_desc': '解压诊断文件并验证格式',
-                'status_analyzing': '正在分析数据...',
-                'status_analyzing_desc': '分析集群状态和配置信息',
-                'status_generating': '正在生成报告...',
-                'status_generating_desc': '生成详细的巡检报告',
-                'status_completed': '处理完成！',
-                'status_completed_desc': '报告生成成功',
-                
-                // 错误信息
-                'error_title': '错误',
-                'error_file_format': '请选择 .zip 格式的文件',
-                'error_report_failed': '报告生成失败',
-                'error_network': '网络错误',
-                'error_download_markdown': 'Markdown 下载失败',
-                'error_download_html': 'HTML 下载失败',
-                'error_server_response': '服务器返回非JSON响应',
-                
-                // 进度
-                'progress_completed': '% 完成'
-            },
-            'en': {
-                'title': 'Elasticsearch Inspection Tool',
-                'subtitle': 'Upload Diagnostic Files to Generate Detailed Inspection Reports',
-                'upload_title': 'Upload Diagnostic File',
-                'drag_drop_text': 'Drag and drop files here or click to upload',
-                'file_format_text': 'Supports .zip format Elasticsearch Diagnostic files',
-                'select_file_btn': 'Select File',
-                'file_selected': 'File Selected',
-                'generate_report_btn': 'Generate Inspection Report',
-                'download_markdown': 'Download Markdown',
-                'download_html': 'Download HTML',
-                'report_title': 'Inspection Report',
-                'language_selector': 'Language',
-                'chinese': '中文',
-                'english': 'English',
-                
-                // Status messages
-                'status_uploading': 'Uploading file...',
-                'status_uploading_desc': 'File upload in progress, please wait',
-                'status_extracting': 'Extracting file...',
-                'status_extracting_desc': 'Extracting diagnostic file and validating format',
-                'status_analyzing': 'Analyzing data...',
-                'status_analyzing_desc': 'Analyzing cluster status and configuration',
-                'status_generating': 'Generating report...',
-                'status_generating_desc': 'Generating detailed inspection report',
-                'status_completed': 'Process completed!',
-                'status_completed_desc': 'Report generated successfully',
-                
-                // Error messages
-                'error_title': 'Error',
-                'error_file_format': 'Please select a .zip format file',
-                'error_report_failed': 'Report generation failed',
-                'error_network': 'Network error',
-                'error_download_markdown': 'Markdown download failed',
-                'error_download_html': 'HTML download failed',
-                'error_server_response': 'Server returned non-JSON response',
-                
-                // Progress
-                'progress_completed': '% completed'
-            }
-        };
+        // 翻译数据缓存
+        let translations = {};
 
         // 国际化类
         class I18n {
@@ -411,7 +375,7 @@
             detectLanguage() {
                 // 检查localStorage中的语言设置
                 const saved = localStorage.getItem('language');
-                if (saved && TRANSLATIONS[saved]) {
+                if (saved && ['zh', 'en'].includes(saved)) {
                     return saved;
                 }
 
@@ -426,21 +390,53 @@
                 return 'zh'; // 默认中文
             }
 
-            init() {
+            async init() {
+                await this.loadTranslations();
                 this.updateUI();
                 this.bindEvents();
             }
 
-            setLanguage(lang) {
-                if (TRANSLATIONS[lang]) {
+            async loadTranslations() {
+                try {
+                    const response = await fetch(`${API_BASE}/api/translations?lang=${this.currentLanguage}`);
+                    translations = await response.json();
+                } catch (error) {
+                    console.error('Failed to load translations:', error);
+                    // 使用默认翻译作为后备
+                    translations = {
+                        'title': this.currentLanguage === 'zh' ? 'Elasticsearch 巡检工具' : 'Elasticsearch Inspection Tool',
+                        'get_diagnostic_title': this.currentLanguage === 'zh' ? '获取 Diagnostic 包' : 'Get Diagnostic Package',
+                        'get_diagnostic_desc': this.currentLanguage === 'zh' ? '了解如何生成 Elasticsearch 诊断文件' : 'Learn how to generate Elasticsearch diagnostic files',
+                        'get_diagnostic_btn': this.currentLanguage === 'zh' ? '获取方法' : 'Get Methods'
+                    };
+                }
+            }
+
+            async setLanguage(lang) {
+                if (['zh', 'en'].includes(lang)) {
                     this.currentLanguage = lang;
                     localStorage.setItem('language', lang);
+                    
+                    // 发送语言切换请求到服务器
+                    try {
+                        await fetch(`${API_BASE}/api/set-language`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ language: lang })
+                        });
+                    } catch (error) {
+                        console.error('Failed to set language on server:', error);
+                    }
+                    
+                    await this.loadTranslations();
                     this.updateUI();
                 }
             }
 
             t(key) {
-                return TRANSLATIONS[this.currentLanguage][key] || key;
+                return translations[key] || key;
             }
 
             updateUI() {
@@ -453,6 +449,12 @@
                 // 更新主要文本
                 document.getElementById('main-title').textContent = this.t('title');
                 document.getElementById('main-subtitle').textContent = this.t('subtitle');
+                
+                // 更新获取 Diagnostic 包部分
+                document.getElementById('get-diagnostic-title').textContent = this.t('get_diagnostic_title');
+                document.getElementById('get-diagnostic-desc').textContent = this.t('get_diagnostic_desc');
+                document.getElementById('get-diagnostic-btn-text').textContent = this.t('get_diagnostic_btn');
+                
                 document.getElementById('upload-title').textContent = this.t('upload_title');
                 document.getElementById('drag-drop-text').textContent = this.t('drag_drop_text');
                 document.getElementById('file-format-text').textContent = this.t('file_format_text');
@@ -470,6 +472,14 @@
                 // 更新语言选择器状态
                 document.getElementById('zh-check').style.opacity = this.currentLanguage === 'zh' ? '1' : '0';
                 document.getElementById('en-check').style.opacity = this.currentLanguage === 'en' ? '1' : '0';
+                
+                // 更新所有带有 data-i18n 属性的元素（包括footer中的链接）
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    if (this.t(key) !== key) {
+                        element.textContent = this.t(key);
+                    }
+                });
             }
 
             bindEvents() {
@@ -489,10 +499,10 @@
 
                 // 语言选项点击事件
                 document.querySelectorAll('.language-option').forEach(option => {
-                    option.addEventListener('click', (e) => {
+                    option.addEventListener('click', async (e) => {
                         e.stopPropagation();
                         const lang = option.getAttribute('data-lang');
-                        this.setLanguage(lang);
+                        await this.setLanguage(lang);
                         languageDropdown.classList.add('hidden');
                     });
                 });
@@ -501,6 +511,11 @@
 
         // 初始化国际化
         const i18n = new I18n();
+
+        // 获取 Diagnostic 包按钮事件
+        document.getElementById('getDiagnosticBtn').addEventListener('click', () => {
+            window.location.href = `${API_BASE}/diagnostic-guide`;
+        });
 
         let uploadedFile = null;
         let reportData = null;
@@ -850,6 +865,12 @@
         function hideError() {
             errorAlert.classList.add('hidden');
         }
+
+        // 获取 Diagnostic 包按钮点击事件
+        const getDiagnosticBtn = document.getElementById('getDiagnosticBtn');
+        getDiagnosticBtn.addEventListener('click', () => {
+            window.open(`${API_BASE}/diagnostic-guide`, '_blank');
+        });
     </script>
 </body>
 </html> 
