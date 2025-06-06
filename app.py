@@ -174,15 +174,7 @@ def process_table(table_lines):
 
 @app.route('/esreport/')
 def index():
-    """主页 - 支持语言检测"""
-    # 检测浏览器语言
-    accept_language = request.headers.get('Accept-Language', '')
-    detected_lang = detect_browser_language(accept_language)
-    
-    # 设置语言
-    i18n.set_language(detected_lang)
-    
-    return render_template('index.html', language=detected_lang)
+    return render_template('index.html')
 
 @app.route('/esreport/health')
 def health():
@@ -571,30 +563,28 @@ def server_error(e):
 
 @app.route('/esreport/terms-of-use')
 def terms_of_use():
-    """使用条款页面 - 支持语言检测"""
     # 检测浏览器语言
-    accept_language = request.headers.get('Accept-Language', '')
-    detected_lang = detect_browser_language(accept_language)
-    
-    # 设置语言
-    i18n.set_language(detected_lang)
-    
-    return render_template('terms_of_use.html', language=detected_lang)
+    browser_language = request.headers.get('Accept-Language', '')
+    default_language = 'zh' if 'zh' in browser_language else 'en'
+    return render_template('terms_of_use.html', default_language=default_language)
 
 @app.route('/esreport/diagnostic-guide')
 def diagnostic_guide():
-    """Diagnostic 获取指南页面 - 支持语言检测"""
     # 检测浏览器语言
-    accept_language = request.headers.get('Accept-Language', '')
-    detected_lang = detect_browser_language(accept_language)
-    
-    # 设置语言
-    i18n.set_language(detected_lang)
-    
-    return render_template('diagnostic_guide.html', language=detected_lang)
+    browser_language = request.headers.get('Accept-Language', '')
+    default_language = 'zh' if 'zh' in browser_language else 'en'
+    return render_template('diagnostic_guide.html', default_language=default_language)
 
 @app.route('/esreport/api/translate')
 def translate():
+    # ... existing code ...
+
+@app.route('/esreport/upload', methods=['POST'])
+def upload_file():
+    # ... existing code ...
+
+@app.route('/esreport/download/<filename>')
+def download_file(filename):
     # ... existing code ...
 
 if __name__ == '__main__':

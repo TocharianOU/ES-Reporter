@@ -253,14 +253,16 @@
         let translations = {};
 
         // 加载翻译
-        async function loadTranslations() {
+        async function loadTranslations(language) {
             try {
-                const response = await fetch(`/api/translations?lang=${currentLanguage}`);
-                translations = await response.json();
-                updateLanguageDisplay();
-                updatePageContent();
+                const response = await fetch(`/esreport/api/translate?lang=${language}`);
+                if (!response.ok) {
+                    throw new Error('Failed to load translations');
+                }
+                return await response.json();
             } catch (error) {
-                console.error('Failed to load translations:', error);
+                console.error('Translation loading error:', error);
+                return {};
             }
         }
 
@@ -328,7 +330,7 @@
                 });
 
                 // 重新加载翻译
-                await loadTranslations();
+                await loadTranslations(lang);
             } catch (error) {
                 console.error('Failed to switch language:', error);
             }
@@ -365,7 +367,7 @@
             });
 
             // 初始化翻译
-            loadTranslations();
+            loadTranslations(currentLanguage);
         });
     </script>
 </body>

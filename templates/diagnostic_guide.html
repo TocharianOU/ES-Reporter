@@ -214,12 +214,15 @@ cd diagnostics-*<br>
         // 加载翻译
         async function loadTranslations() {
             try {
-                const response = await fetch(`/api/translations?lang=${currentLanguage}`);
+                const response = await fetch(`/esreport/api/translate?lang=${currentLanguage}`);
+                if (!response.ok) {
+                    throw new Error('Failed to load translations');
+                }
                 translations = await response.json();
                 updateLanguageDisplay();
                 updatePageContent();
             } catch (error) {
-                console.error('Failed to load translations:', error);
+                console.error('Translation loading error:', error);
             }
         }
 

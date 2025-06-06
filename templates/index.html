@@ -330,11 +330,11 @@
                 <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                     <!-- 左侧链接 -->
                     <div class="flex space-x-6 text-sm">
-                        <a href="/terms-of-use" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                        <a href="/esreport/terms-of-use" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
                             <i class="fas fa-file-contract mr-2"></i>
                             <span data-i18n="terms_of_use">使用条款</span>
                         </a>
-                        <a href="/diagnostic-guide" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
+                        <a href="/esreport/diagnostic-guide" class="text-gray-600 hover:text-blue-600 transition-colors flex items-center">
                             <i class="fas fa-question-circle mr-2"></i>
                             <span data-i18n="get_diagnostic_btn">获取方法</span>
                         </a>
@@ -871,6 +871,25 @@
         getDiagnosticBtn.addEventListener('click', () => {
             window.open(`${API_BASE}/diagnostic-guide`, '_blank');
         });
+
+        // 修改获取诊断包按钮的点击事件
+        document.querySelector('.diagnostic-btn').addEventListener('click', function() {
+            window.location.href = '/esreport/diagnostic-guide';
+        });
+
+        // 修改API调用路径
+        async function loadTranslations(language) {
+            try {
+                const response = await fetch(`/esreport/api/translate?lang=${language}`);
+                if (!response.ok) {
+                    throw new Error('Failed to load translations');
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Translation loading error:', error);
+                return null;
+            }
+        }
     </script>
 </body>
 </html> 
