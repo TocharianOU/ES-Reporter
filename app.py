@@ -172,7 +172,7 @@ def process_table(table_lines):
     html.append('</table>')
     return '\n'.join(html)
 
-@app.route('/')
+@app.route('/esreport/')
 def index():
     """主页 - 支持语言检测"""
     # 检测浏览器语言
@@ -184,7 +184,7 @@ def index():
     
     return render_template('index.html', language=detected_lang)
 
-@app.route('/health')
+@app.route('/esreport/health')
 def health():
     """健康检查"""
     return jsonify({
@@ -195,7 +195,7 @@ def health():
         'path': request.path
     })
 
-@app.route('/api/upload-diagnostic', methods=['POST'])
+@app.route('/esreport/api/upload-diagnostic', methods=['POST'])
 def upload_diagnostic():
     """上传并处理 diagnostic 文件"""
     try:
@@ -441,7 +441,7 @@ def generate_download_filename(original_filename: str, report_format: str) -> st
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     return f"{base_name}_report_{timestamp}.{report_format}"
 
-@app.route('/api/download-html/<report_id>')
+@app.route('/esreport/api/download-html/<report_id>')
 def download_html(report_id):
     """下载HTML报告"""
     if report_id not in reports:
@@ -479,7 +479,7 @@ def download_html(report_id):
     except Exception as e:
         return jsonify({'error': f'HTML下载失败: {str(e)}'}), 500
 
-@app.route('/api/download-markdown/<report_id>')
+@app.route('/esreport/api/download-markdown/<report_id>')
 def download_markdown(report_id):
     """下载Markdown报告"""
     if report_id not in reports:
@@ -498,13 +498,13 @@ def download_markdown(report_id):
         return jsonify({'error': f'Markdown下载失败: {str(e)}'}), 500
 
 # 添加S3测试接口
-@app.route('/api/s3-test')
+@app.route('/esreport/api/s3-test')
 def test_s3_connection():
     """测试S3连接"""
     result = s3_uploader.test_connection()
     return jsonify(result)
 
-@app.route('/api/reports')
+@app.route('/esreport/api/reports')
 def list_reports():
     """列出所有报告"""
     report_list = []
@@ -520,7 +520,7 @@ def list_reports():
         'reports': sorted(report_list, key=lambda x: x['generated_at'], reverse=True)
     })
 
-@app.route('/api/translations')
+@app.route('/esreport/api/translations')
 def get_translations():
     """获取翻译文本"""
     lang = request.args.get('lang', 'zh')
@@ -536,7 +536,7 @@ def get_translations():
     
     return jsonify(translations)
 
-@app.route('/api/set-language', methods=['POST'])
+@app.route('/esreport/api/set-language', methods=['POST'])
 def set_language():
     """设置语言"""
     data = request.get_json()
@@ -569,7 +569,19 @@ def server_error(e):
     """500错误处理"""
     return jsonify({'error': '服务器内部错误'}), 500
 
-@app.route('/diagnostic-guide')
+@app.route('/esreport/terms-of-use')
+def terms_of_use():
+    """使用条款页面 - 支持语言检测"""
+    # 检测浏览器语言
+    accept_language = request.headers.get('Accept-Language', '')
+    detected_lang = detect_browser_language(accept_language)
+    
+    # 设置语言
+    i18n.set_language(detected_lang)
+    
+    return render_template('terms_of_use.html', language=detected_lang)
+
+@app.route('/esreport/diagnostic-guide')
 def diagnostic_guide():
     """Diagnostic 获取指南页面 - 支持语言检测"""
     # 检测浏览器语言
@@ -581,17 +593,9 @@ def diagnostic_guide():
     
     return render_template('diagnostic_guide.html', language=detected_lang)
 
-@app.route('/terms-of-use')
-def terms_of_use():
-    """使用条款页面 - 支持语言检测"""
-    # 检测浏览器语言
-    accept_language = request.headers.get('Accept-Language', '')
-    detected_lang = detect_browser_language(accept_language)
-    
-    # 设置语言
-    i18n.set_language(detected_lang)
-    
-    return render_template('terms_of_use.html', language=detected_lang)
+@app.route('/esreport/api/translate')
+def translate():
+    # ... existing code ...
 
 if __name__ == '__main__':
     import argparse
